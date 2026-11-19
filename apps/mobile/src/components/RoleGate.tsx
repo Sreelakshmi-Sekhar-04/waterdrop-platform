@@ -7,7 +7,15 @@ import { Skeleton } from './States';
 import { Screen } from './Screen';
 
 /** Screens already connected to the server. All others still show Phase 2 demo data. */
-const LIVE_SCREENS = new Set(['/account', '/address', '/profile-setup']);
+const LIVE_SCREENS = new Set([
+  '/account',
+  '/address',
+  '/profile-setup',
+  '/home',
+  '/order',
+  '/placed',
+  '/orders',
+]);
 
 /**
  * Keeps each role inside its own screens. Real permission checks always happen

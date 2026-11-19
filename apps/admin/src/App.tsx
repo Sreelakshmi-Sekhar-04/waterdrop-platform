@@ -4,6 +4,7 @@ import { Layout, NAV_ITEMS } from './components/Layout';
 import { TodayPage } from './pages/TodayPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { OrdersPage } from './pages/OrdersPage';
+import { OrderDetailPage } from './pages/OrderDetailPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { StaffPage } from './pages/StaffPage';
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <TodayPage /> },
       { path: 'orders', element: <OrdersPage /> },
+      { path: 'orders/:id', element: <OrderDetailPage /> },
       { path: 'customers', element: <CustomersPage /> },
       { path: 'customers/:id', element: <CustomerDetailPage /> },
       { path: 'staff', element: <StaffPage /> },

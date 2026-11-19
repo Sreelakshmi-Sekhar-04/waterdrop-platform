@@ -12,7 +12,17 @@ import { createApp } from '../src/app';
 import { loadEnv } from '../src/config/env';
 import { createDb, type DbHandle } from '../src/db/client';
 import { runMigrations } from '../src/db/migrate';
-import { sessions, suppliers, userRoles, users } from '../src/db/schema';
+import {
+  deliveryWindows,
+  productPrices,
+  products,
+  sessions,
+  settings,
+  suppliers,
+  userRoles,
+  users,
+} from '../src/db/schema';
+import { DEMO_SETTINGS } from '../src/modules/settings/settings.schema';
 import type { OtpProvider } from '../src/providers/otp';
 import { createLogger } from '../src/lib/logger';
 import { TokenService } from '../src/lib/tokens';
@@ -39,6 +49,12 @@ export interface TestHarness {
   lastCode: (phone: string) => string;
   /** When set, the next send fails like a provider outage. */
   failNextSend: { value: boolean };
+  /** Set `now` to fix the time the ordering rules see; null = the real time. */
+  clock: { now: Date | null };
+  /** DEMO settings, the 20 L can at ₹40 and Morning/Afternoon/Evening windows (Mon–Sat, 100 cans). */
+  setupOrdering: (
+    supplierId: string,
+  ) => Promise<{ productId: string; windows: Record<string, string> }>;
   cleanup: () => Promise<void>;
 }
 
@@ -81,7 +97,14 @@ export async function createHarness(
       sms.push(m);
     },
   };
-  const app = createApp({ env, db: handle.db, logger: createLogger('silent'), otpProvider });
+  const clock: TestHarness['clock'] = { now: null };
+  const app = createApp({
+    env,
+    db: handle.db,
+    logger: createLogger('silent'),
+    otpProvider,
+    clock: () => clock.now ?? new Date(),
+  });
   const lastCode = (phone: string) => {
     const m = [...sms].reverse().find((x) => x.phone === phone);
     if (!m) throw new Error(`no SMS sent to ${phone}`);
@@ -128,6 +151,58 @@ export async function createHarness(
     return { userId: u!.id, supplierId, role, token };
   };
 
+  const setupOrdering: TestHarness['setupOrdering'] = async (supplierId) => {
+    await handle.db
+      .insert(settings)
+      .values(
+        Object.entries(DEMO_SETTINGS)
+          .filter(([, v]) => v !== null)
+          .map(([key, value]) => ({ supplierId, key, value })),
+      )
+      .onConflictDoNothing();
+    const [p] = await handle.db
+      .insert(products)
+      .values({ supplierId, sku: 'CAN-20L', nameEn: '20 litre water can', nameMl: '20 ലിറ്റർ ക്യാൻ' })
+      .returning({ id: products.id });
+    await handle.db
+      .insert(productPrices)
+      .values({ supplierId, productId: p!.id, pricePaise: 4000, validFrom: '2026-01-01' });
+    const days = [1, 2, 3, 4, 5, 6];
+    const rows = await handle.db
+      .insert(deliveryWindows)
+      .values([
+        {
+          supplierId,
+          nameEn: 'Morning',
+          nameMl: 'രാവിലെ',
+          startTime: '07:00',
+          endTime: '11:00',
+          capacityCans: 100,
+          daysOfWeek: days,
+        },
+        {
+          supplierId,
+          nameEn: 'Afternoon',
+          nameMl: 'ഉച്ചയ്ക്ക്',
+          startTime: '11:00',
+          endTime: '15:00',
+          capacityCans: 100,
+          daysOfWeek: days,
+        },
+        {
+          supplierId,
+          nameEn: 'Evening',
+          nameMl: 'വൈകുന്നേരം',
+          startTime: '15:00',
+          endTime: '19:00',
+          capacityCans: 100,
+          daysOfWeek: days,
+        },
+      ])
+      .returning({ id: deliveryWindows.id, name: deliveryWindows.nameEn });
+    return { productId: p!.id, windows: Object.fromEntries(rows.map((r) => [r.name, r.id])) };
+  };
+
   const cleanup = async () => {
     await handle.close();
     const c = new pg.Client({ connectionString: ADMIN_URL });
@@ -146,6 +221,8 @@ export async function createHarness(
     sms,
     lastCode,
     failNextSend,
+    clock,
+    setupOrdering,
     cleanup,
   };
 }

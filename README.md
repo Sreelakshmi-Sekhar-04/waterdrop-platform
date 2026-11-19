@@ -105,6 +105,22 @@ All paths start with `/api/v1`. "Office" means the admin and owner roles. Every 
 | GET, POST, PATCH    | `/admin/staff[/:userId]`                      | Office                                                 |
 | POST                | `/admin/staff/:userId/reset-pin`              | Office                                                 |
 | GET, POST, PATCH    | `/admin/team[/:userId]`                       | Owner                                                  |
+| GET                 | `/customer/order-options?addressId`           | Customer (price, totals, bookable delivery times)      |
+| GET, POST           | `/customer/orders`                            | Customer (POST: 201 new, 200 same `clientRequestId`)   |
+| GET                 | `/customer/orders/:id`                        | Customer (own orders only)                             |
+| POST                | `/customer/orders/:id/cancel`                 | Customer, until out for delivery                       |
+| GET, POST           | `/admin/orders`                               | Office (list by `date` or `customerId`, `status`, `q`) |
+| GET                 | `/admin/orders/:id`                           | Office                                                 |
+| POST                | `/admin/orders/:id/transition`                | Office (accept; reject or cancel with a reason)        |
+| POST                | `/admin/orders/bulk-accept`                   | Office                                                 |
+| GET                 | `/admin/customers/:id/order-options`          | Office                                                 |
+| GET, PUT            | `/admin/customers/:id/price`                  | Read: office. Change: owner                            |
+| GET, POST, PATCH    | `/admin/windows[/:id]`                        | Office                                                 |
+| PUT                 | `/admin/windows/:id/capacity/:date`           | Office                                                 |
+| GET                 | `/admin/window-slots?from&days`               | Office                                                 |
+| GET, POST, DELETE   | `/admin/closed-days[/:id]`                    | Office                                                 |
+| GET                 | `/admin/catalog`                              | Office                                                 |
+| POST                | `/admin/catalog/prices`                       | Owner                                                  |
 | GET, PATCH          | `/admin/settings`                             | Read: office. Change: owner                            |
 | GET                 | `/admin/audit-logs`                           | Office                                                 |
 

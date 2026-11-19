@@ -1,5 +1,5 @@
 /**
- * Phase 1 platform tables, plus Phase 3 users and addresses. Business tables
+ * Phase 1 platform tables, Phase 3 users and addresses, Phase 4 ordering. Business tables
  * (orders, ledgers, …) are added in the phase that builds each feature,
  * following the ERD in docs/PHASE-0-ANALYSIS.md §9.
  *
@@ -10,6 +10,8 @@ import { sql } from 'drizzle-orm';
 import {
   bigserial,
   boolean,
+  check,
+  date,
   doublePrecision,
   index,
   integer,
@@ -19,10 +21,11 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { ROLES } from '@wtrdrop/shared';
+import { ORDER_CHANNELS, ORDER_STATUSES, ROLES } from '@wtrdrop/shared';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow();
@@ -32,6 +35,8 @@ export const recordStatusEnum = pgEnum('record_status', ['active', 'disabled']);
 export const languageEnum = pgEnum('language', ['en', 'ml']);
 export const idempotencyStateEnum = pgEnum('idempotency_state', ['in_progress', 'completed']);
 export const customerTypeEnum = pgEnum('customer_type', ['household', 'office', 'shop']);
+export const orderStatusEnum = pgEnum('order_status', ORDER_STATUSES);
+export const orderChannelEnum = pgEnum('order_channel', ORDER_CHANNELS);
 
 /** A water supplier (tenant). One row at launch; the design allows more later. */
 export const suppliers = pgTable('suppliers', {
@@ -41,6 +46,8 @@ export const suppliers = pgTable('suppliers', {
   status: recordStatusEnum('status').notNull().default('active'),
   gstin: text('gstin'),
   fssaiNo: text('fssai_no'),
+  /** Next human-readable order number (WD-1001, …), taken with an atomic UPDATE … RETURNING. */
+  nextOrderNo: integer('next_order_no').notNull().default(1001),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -198,6 +205,10 @@ export const serviceAreas = pgTable(
     name: text('name').notNull(),
     nameMl: text('name_ml'),
     pincodes: text('pincodes').array().notNull(),
+    /** D-12: delivery charge for this area; null = the business-wide setting. */
+    deliveryChargePaise: integer('delivery_charge_paise'),
+    /** D-12: no charge when an order has more than this many cans; null = the setting, 0 = never free. */
+    freeAboveCans: integer('free_above_cans'),
     status: recordStatusEnum('status').notNull().default('active'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -290,4 +301,249 @@ export const staffDevices = pgTable(
       .on(t.supplierId, t.userId, t.deviceId)
       .where(sql`revoked_at is null`),
   ],
+);
+
+// ---------------------------------------------------------------- Phase 4: ordering
+
+/** What the business sells. At launch one row: the 20-litre can. */
+export const products = pgTable(
+  'products',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    sku: text('sku').notNull(),
+    nameEn: text('name_en').notNull(),
+    nameMl: text('name_ml').notNull(),
+    /** A returnable can is counted in the can ledger and needs a deposit (Phase 5). */
+    isReturnableCan: boolean('is_returnable_can').notNull().default(true),
+    status: recordStatusEnum('status').notNull().default('active'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('products_supplier_sku_uq').on(t.supplierId, t.sku)],
+);
+
+/**
+ * Effective-dated standard prices. The price on a date is the row with the latest valid_from on or
+ * before it, so history is never rewritten and a price can be scheduled ahead.
+ */
+export const productPrices = pgTable(
+  'product_prices',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id, { onDelete: 'restrict' }),
+    pricePaise: integer('price_paise').notNull(),
+    validFrom: date('valid_from', { mode: 'string' }).notNull(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'restrict' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('product_prices_from_uq').on(t.productId, t.validFrom),
+    check('product_prices_price_ck', sql`price_paise >= 0`),
+  ],
+);
+
+/** D-11: a negotiated price for one customer, effective-dated. A null price means "back to standard". */
+export const customerPrices = pgTable(
+  'customer_prices',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'restrict' }),
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id, { onDelete: 'restrict' }),
+    pricePaise: integer('price_paise'),
+    validFrom: date('valid_from', { mode: 'string' }).notNull(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'restrict' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('customer_prices_from_uq').on(t.customerId, t.productId, t.validFrom),
+    check('customer_prices_price_ck', sql`price_paise is null or price_paise >= 0`),
+  ],
+);
+
+/** D-07: broad delivery windows (morning, afternoon, evening) with a default capacity in cans (D-08). */
+export const deliveryWindows = pgTable(
+  'delivery_windows',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    nameEn: text('name_en').notNull(),
+    nameMl: text('name_ml').notNull(),
+    /** Local time in India, HH:MM. */
+    startTime: text('start_time').notNull(),
+    endTime: text('end_time').notNull(),
+    capacityCans: integer('capacity_cans').notNull(),
+    /** 0 = Sunday … 6 = Saturday. */
+    daysOfWeek: integer('days_of_week').array().notNull(),
+    status: recordStatusEnum('status').notNull().default('active'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('delivery_windows_supplier_name_uq').on(t.supplierId, t.nameEn),
+    check('delivery_windows_time_ck', sql`start_time < end_time`),
+    check('delivery_windows_capacity_ck', sql`capacity_cans >= 0`),
+  ],
+);
+
+/**
+ * Cans booked per window per date. Rows are created on first booking. Booking uses one conditional
+ * UPDATE (reserved + qty <= capacity), so two customers can never both take the last cans.
+ */
+export const windowBookings = pgTable(
+  'window_bookings',
+  {
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    windowId: uuid('window_id')
+      .notNull()
+      .references(() => deliveryWindows.id, { onDelete: 'restrict' }),
+    date: date('date', { mode: 'string' }).notNull(),
+    /** A different capacity for this date only; null = the window's default. */
+    capacityCans: integer('capacity_cans'),
+    reservedCans: integer('reserved_cans').notNull().default(0),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.windowId, t.date] }),
+    check('window_bookings_reserved_ck', sql`reserved_cans >= 0`),
+    check('window_bookings_capacity_ck', sql`capacity_cans is null or capacity_cans >= 0`),
+  ],
+);
+
+/** M-12: days (or one window on a day) when the business does not deliver. */
+export const closedDays = pgTable(
+  'closed_days',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    date: date('date', { mode: 'string' }).notNull(),
+    /** Null = the whole day. */
+    windowId: uuid('window_id').references(() => deliveryWindows.id, { onDelete: 'restrict' }),
+    reason: text('reason').notNull(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'restrict' }),
+    createdAt: createdAt(),
+  },
+  (t) => [unique('closed_days_uq').on(t.supplierId, t.date, t.windowId).nullsNotDistinct()],
+);
+
+export const orders = pgTable(
+  'orders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    orderNo: integer('order_no').notNull(),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'restrict' }),
+    addressId: uuid('address_id')
+      .notNull()
+      .references(() => addresses.id, { onDelete: 'restrict' }),
+    /** The address as it was when the order was placed (later edits never change history). */
+    addressSnapshot: jsonb('address_snapshot').notNull(),
+    serviceAreaId: uuid('service_area_id')
+      .notNull()
+      .references(() => serviceAreas.id, { onDelete: 'restrict' }),
+    windowId: uuid('window_id')
+      .notNull()
+      .references(() => deliveryWindows.id, { onDelete: 'restrict' }),
+    deliveryDate: date('delivery_date', { mode: 'string' }).notNull(),
+    status: orderStatusEnum('status').notNull(),
+    channel: orderChannelEnum('channel').notNull(),
+    /** Cans ordered (all products together; one product at launch). Booked against window capacity. */
+    totalQty: integer('total_qty').notNull(),
+    subtotalPaise: integer('subtotal_paise').notNull(),
+    deliveryChargePaise: integer('delivery_charge_paise').notNull(),
+    /** Estimate shown at ordering; the deposit is charged at delivery from the can ledger (Phase 5). */
+    depositPaise: integer('deposit_paise').notNull(),
+    totalPaise: integer('total_paise').notNull(),
+    note: text('note'),
+    /** Duplicate guard: one order per id generated by the order screen. */
+    clientRequestId: uuid('client_request_id').notNull(),
+    placedBy: uuid('placed_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    /** Whether the window's capacity is still held (released on cancel or reject). */
+    capacityHeld: boolean('capacity_held').notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('orders_supplier_no_uq').on(t.supplierId, t.orderNo),
+    uniqueIndex('orders_customer_request_uq').on(t.customerId, t.clientRequestId),
+    index('orders_supplier_date_status_idx').on(t.supplierId, t.deliveryDate, t.status),
+    index('orders_customer_idx').on(t.customerId, t.createdAt),
+    check(
+      'orders_money_ck',
+      sql`subtotal_paise >= 0 and delivery_charge_paise >= 0 and deposit_paise >= 0 and total_paise = subtotal_paise + delivery_charge_paise + deposit_paise`,
+    ),
+    check('orders_qty_ck', sql`total_qty > 0`),
+  ],
+);
+
+export const orderItems = pgTable(
+  'order_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'restrict' }),
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id, { onDelete: 'restrict' }),
+    qtyOrdered: integer('qty_ordered').notNull(),
+    /** Filled at delivery (Phase 5). */
+    qtyDelivered: integer('qty_delivered'),
+    /** Price snapshot at placement (M-21). */
+    unitPricePaise: integer('unit_price_paise').notNull(),
+    depositPerCanPaise: integer('deposit_per_can_paise').notNull(),
+    depositCans: integer('deposit_cans').notNull(),
+  },
+  (t) => [
+    uniqueIndex('order_items_order_product_uq').on(t.orderId, t.productId),
+    check('order_items_qty_ck', sql`qty_ordered > 0`),
+  ],
+);
+
+/** Every status change, with who made it and why. Append-only like the audit log. */
+export const orderStatusHistory = pgTable(
+  'order_status_history',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'restrict' }),
+    fromStatus: orderStatusEnum('from_status'),
+    toStatus: orderStatusEnum('to_status').notNull(),
+    /** Null for automatic changes (auto-accept). */
+    actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'restrict' }),
+    actorRole: text('actor_role').notNull(),
+    reason: text('reason'),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('order_status_history_order_idx').on(t.orderId, t.at)],
 );

@@ -45,6 +45,10 @@ export const serviceAreaInputSchema = z.object({
   name: text(60),
   nameMl: z.string().trim().max(60).nullable().optional(),
   pincodes: z.array(pincodeSchema).min(1, 'Add at least one PIN code').max(50),
+  /** D-12. Null = use the business-wide setting. */
+  deliveryChargePaise: z.number().int().min(0).max(100_000).nullable().optional(),
+  /** D-12. No charge above this many cans; null = the setting, 0 = never free. */
+  freeAboveCans: z.number().int().min(0).max(100).nullable().optional(),
   status: z.enum(['active', 'disabled']).optional(),
 });
 export type ServiceAreaInput = z.infer<typeof serviceAreaInputSchema>;

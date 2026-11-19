@@ -7,6 +7,7 @@ import { call } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { Dialog } from '../components/Dialog';
 import { Chip, LiveMessage, PageHeader } from '../components/ui';
+import { CustomerOrders, CustomerPrice } from '../components/CustomerOrders';
 
 interface Address {
   id: string;
@@ -141,6 +142,7 @@ export function CustomerDetailPage() {
           </dd>
         </div>
       </dl>
+      <CustomerPrice customerId={c.id} />
 
       <section aria-labelledby="addr-h">
         <div className="section-head">
@@ -187,6 +189,8 @@ export function CustomerDetailPage() {
           </ul>
         )}
       </section>
+
+      <CustomerOrders customerId={c.id} active={c.status === 'active' && c.addresses.length > 0} />
 
       <section aria-labelledby="ledger-h">
         <h2 id="ledger-h">{t('customer.ledger.title')}</h2>

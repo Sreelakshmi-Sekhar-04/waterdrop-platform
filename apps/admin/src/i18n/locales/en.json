@@ -14,7 +14,7 @@
     "skipToContent": "Skip to main content",
     "language": "മലയാളം",
     "languageLabel": "Switch language to Malayalam",
-    "foundationNotice": "Today and Orders still show made-up demo data (ordering arrives in Phase 4). Customers, Delivery staff and Settings are real.",
+    "foundationNotice": "Orders, Customers, Delivery staff and Settings are real. The Today page still shows made-up demo data (it becomes real in Phase 7), and giving orders to drivers arrives in Phase 5.",
     "signOut": "Sign out"
   },
   "today": {
@@ -25,7 +25,6 @@
     "searchLabel": "Search customers",
     "searchPlaceholder": "Customer phone or name",
     "newOrder": "+ New order",
-    "newOrderDemo": "Taking an order for a phone caller is built in Phase 4. Nothing was created.",
     "items": {
       "unassigned": "orders for today not given to a driver yet",
       "failed": "deliveries failed: customer not home",
@@ -79,7 +78,8 @@
     "active": "Active",
     "switchedOff": "Switched off",
     "edit": "Change",
-    "save": "Save"
+    "save": "Save",
+    "saving": "Saving…"
   },
   "orderStatus": {
     "PLACED": "New",
@@ -98,31 +98,45 @@
       "needsDriver": "Needs a driver",
       "onTheWay": "On the way",
       "problems": "Problems",
-      "done": "Done"
+      "done": "Done",
+      "toAccept": "To accept"
     },
     "bulkLabel": "Selected orders",
     "selected_one": "{{count}} order selected",
     "selected_other": "{{count}} orders selected",
-    "driverLabel": "Give to",
-    "assign": "Assign",
-    "assignedDemo_one": "Demo: {{count}} order given to {{driver}}. Nothing was saved.",
-    "assignedDemo_other": "Demo: {{count}} orders given to {{driver}}. Nothing was saved.",
     "empty": "No orders here right now.",
-    "selectAll": "Select all orders waiting for a driver",
+    "selectAll": "Select all orders waiting to be accepted",
     "selectOne": "Select order {{id}} for {{name}}",
     "cols": {
       "order": "Order",
       "customer": "Customer",
       "cans": "Cans",
-      "slot": "Time slot",
+      "slot": "Delivery time",
       "status": "Status",
-      "driver": "Driver"
+      "total": "Total"
     },
     "channel": {
       "app": "From app",
-      "phone": "By phone"
+      "office": "Taken by office"
     },
-    "noDriver": "Not given yet"
+    "dayLabel": "Delivery day",
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "date": "Delivery date",
+    "backToToday": "Back to today",
+    "searchLabel": "Search this day's orders",
+    "searchPlaceholder": "Name, area, last 4 digits or WD-number",
+    "capacityLabel": "Cans booked per delivery time",
+    "booked": "{{reserved}} of {{capacity}} cans booked",
+    "closed": "Closed: {{reason}}",
+    "accept": "Accept",
+    "accepted_one": "{{count}} order accepted.",
+    "accepted_other": "{{count}} orders accepted.",
+    "acceptedSome_one": "{{count}} order accepted. {{skipped}} had already changed, so they were left as they are.",
+    "acceptedSome_other": "{{count}} orders accepted. {{skipped}} had already changed, so they were left as they are.",
+    "assignLater": "Giving orders to a driver is built in Phase 5. For now these orders wait here.",
+    "todayDate": "Today, {{date}}",
+    "tomorrowDate": "Tomorrow, {{date}}"
   },
   "roles": {
     "owner": "Owner",
@@ -211,7 +225,9 @@
     "ledger": {
       "title": "Can history",
       "notYet": "Can deliveries and returns will be recorded here from Phase 5, when delivery is built."
-    }
+    },
+    "orders": "Orders",
+    "noOrders": "No orders yet."
   },
   "address": {
     "label": "Address name",
@@ -294,7 +310,21 @@
     "password": "Your password",
     "currentPassword": "Current password",
     "changePassword": "Change password",
-    "passwordChanged": "Password changed. Other browsers were signed out."
+    "passwordChanged": "Password changed. Other browsers were signed out.",
+    "price": "Can price",
+    "windows": "Delivery times",
+    "windowsHelp": "Customers choose one of these times. The number of cans is how many your vans can carry in that time.",
+    "closedDays": "Closed days",
+    "closedDaysHelp": "Holidays or days off. Customers cannot book these; orders already booked stay, so call those customers.",
+    "deliveryCharge": "Delivery charge",
+    "chargeDefault": "Business setting",
+    "chargeFree": "Free",
+    "chargeFreeAbove_one": "{{amount}}, free above {{count}} can",
+    "chargeFreeAbove_other": "{{amount}}, free above {{count}} cans",
+    "chargeLabel": "Delivery charge (₹)",
+    "freeAboveLabel": "Free above (cans)",
+    "chargeHint": "Leave both blank to use the business setting. 0 means free delivery in this area.",
+    "badCharge": "Enter an amount like 20, and a whole number of cans."
   },
   "errors": {
     "NETWORK": "Cannot reach the server. Check the connection and try again.",
@@ -320,6 +350,150 @@
     "CANNOT_CHANGE_SELF": "You cannot switch off your own account.",
     "NOT_FOUND": "Not found. It may belong to another supplier or have been removed.",
     "UNAUTHENTICATED": "Please sign in again.",
-    "RATE_LIMITED": "Too many requests. Please wait a minute."
+    "RATE_LIMITED": "Too many requests. Please wait a minute.",
+    "WINDOW_FULL": "That delivery time is full. Choose another time.",
+    "DAY_CLOSED": "Deliveries are closed then. Choose another day.",
+    "TOO_LATE_FOR_WINDOW": "It is too late to book that delivery time. Choose a later one.",
+    "WINDOW_NOT_AVAILABLE": "That delivery time is not available.",
+    "PRICE_CHANGED": "The price changed. Check the new total and save again.",
+    "QTY_ABOVE_MAX": "That is more cans than allowed in one order ({{max}}).",
+    "REASON_REQUIRED": "Write a short reason.",
+    "INVALID_TRANSITION": "This order has already changed. Reload the page to see it.",
+    "TOO_LATE_TO_CANCEL": "This order is already on its way and cannot be cancelled.",
+    "DATE_IN_PAST": "Choose today or a later date.",
+    "ALREADY_CLOSED": "This day is already closed.",
+    "WINDOW_NAME_TAKEN": "A delivery time with this name already exists.",
+    "WINDOW_TIMES": "The end time must be after the start time.",
+    "SETUP_INCOMPLETE": "Ordering is not set up yet: add a price and delivery times under Settings.",
+    "ACCOUNT_DISABLED": "This customer is switched off. Switch them on first."
+  },
+  "newOrder": {
+    "title": "New order",
+    "findCustomer": "Find the customer",
+    "noMatch": "No customer found. Add them on the Customers page first.",
+    "otherCustomer": "Choose another customer",
+    "noAddress": "This customer has no delivery address yet. Add one on their page first.",
+    "address": "Deliver to",
+    "cans": "Cans",
+    "when": "Delivery time",
+    "note": "Note for this order (optional)",
+    "cansLine_one": "{{count}} can × {{price}}",
+    "cansLine_other": "{{count}} cans × {{price}}",
+    "specialPrice": "their price",
+    "delivery": "Delivery",
+    "free0": "Free",
+    "deposit_one": "Can deposit ({{count}} new can)",
+    "deposit_other": "Can deposit ({{count}} new cans)",
+    "total": "Total to collect",
+    "save": "Save order · {{total}}",
+    "free_one": "{{count}} can free",
+    "free_other": "{{count}} cans free",
+    "unavailable": {
+      "CLOSED": "closed ({{reason}})",
+      "TOO_LATE": "already started",
+      "FULL": "full"
+    },
+    "created": "Order {{no}} saved for {{name}}."
+  },
+  "order": {
+    "notFound": "Order not found",
+    "back": "← Orders for that day",
+    "customer": "Customer and address",
+    "note": "Note",
+    "what": "What and when",
+    "depositNote": "The can deposit is an estimate. The driver records the real number of cans at delivery (Phase 5).",
+    "history": "What happened",
+    "automatic": "Automatic",
+    "reject": "Reject",
+    "cancel": "Cancel order",
+    "confirm": {
+      "REJECTED": "Reject order {{no}}?",
+      "CANCELLED": "Cancel order {{no}}?"
+    },
+    "yes": {
+      "REJECTED": "Reject order",
+      "CANCELLED": "Cancel order"
+    },
+    "done": {
+      "ACCEPTED": "Order {{no}} accepted.",
+      "REJECTED": "Order {{no}} rejected. Its cans are free again.",
+      "CANCELLED": "Order {{no}} cancelled. Its cans are free again."
+    },
+    "reasonHelp": "The customer will see this reason, so keep it short and polite.",
+    "reason": "Reason",
+    "reasonNeeded": "Write a short reason (at least 3 letters).",
+    "keep": "Keep the order"
+  },
+  "price": {
+    "label": "Price per can",
+    "special": "Their own price",
+    "standard": "Standard price",
+    "change": "Change price",
+    "title": "Price for this customer",
+    "help": "Leave it at the standard price ({{standard}}) unless you agreed a different price. It applies to new orders from today.",
+    "perCan": "Price per can (₹)",
+    "perCanShort": "per can",
+    "saved": "Price saved. New orders use it from today.",
+    "backToStandard": "Back to the standard price.",
+    "useStandard": "Use the standard price",
+    "scheduled": "{{price}} from {{from}}",
+    "changeStandard": "Change the standard price",
+    "ownerOnly": "Only the owner can change prices.",
+    "history": "Earlier prices",
+    "standardHelp": "Orders already placed keep the price they were placed at. Customers with their own price are not changed.",
+    "amount": "New price per can (₹)",
+    "from": "Starts on",
+    "badAmount": "Enter an amount like 40 or 42.50.",
+    "badDate": "Choose today or a later date.",
+    "standardSaved": "Standard price set to {{price}} from {{from}}."
+  },
+  "windows": {
+    "add": "+ Add delivery time",
+    "none": "No delivery times yet. Customers cannot order until you add one.",
+    "cols": {
+      "name": "Time",
+      "cans": "Cans",
+      "days": "Days"
+    },
+    "day": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
+    "edit": "Change {{name}}",
+    "saved": "{{name}} saved.",
+    "nameEn": "Name in English",
+    "nameMl": "Name in Malayalam",
+    "start": "Starts",
+    "end": "Ends",
+    "badTimes": "The end time must be after the start time.",
+    "cans": "Cans in this time",
+    "cansHint": "Set 0 to stop new bookings without removing the time.",
+    "days": "Days",
+    "needDay": "Choose at least one day.",
+    "active": "Customers can choose this time"
+  },
+  "closed": {
+    "add": "+ Close a day",
+    "none": "No closed days coming up.",
+    "cols": {
+      "date": "Date",
+      "time": "Delivery time",
+      "reason": "Reason"
+    },
+    "wholeDay": "Whole day",
+    "help": "Customers will not be able to book it. Orders already booked are not cancelled.",
+    "reasonHint": "For example: Onam, van repair.",
+    "save": "Close",
+    "reopen": "Open again",
+    "reopenLabel": "Open {{when}} again",
+    "saved": "{{when}} closed.",
+    "savedWithOrders_one": "{{when}} closed. {{count}} order is already booked then; call that customer.",
+    "savedWithOrders_other": "{{when}} closed. {{count}} orders are already booked then; call those customers.",
+    "reopened": "{{when}} is open again."
   }
 }

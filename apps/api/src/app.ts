@@ -20,6 +20,7 @@ import { createOtpProvider, type OtpProvider } from './providers/otp';
 import { profileRoutes } from './modules/customers/profile.routes';
 import { adminPeopleRoutes } from './modules/people/people.routes';
 import { serviceAreaRoutes } from './modules/service-areas/service-areas.routes';
+import { orderingRoutes, type Clock } from './modules/ordering/ordering.routes';
 
 export const API_VERSION = '0.1.0';
 
@@ -29,9 +30,11 @@ export interface AppDeps {
   logger: Logger;
   /** Tests pass their own provider to read the code; otherwise chosen by OTP_PROVIDER. */
   otpProvider?: OtpProvider;
+  /** Tests pass a fixed clock to check cut-off times; otherwise the real time. */
+  clock?: Clock;
 }
 
-export function createApp({ env, db, logger, otpProvider }: AppDeps): Express {
+export function createApp({ env, db, logger, otpProvider, clock }: AppDeps): Express {
   const app = express();
   const tokens = new TokenService(env.JWT_SECRET);
   const authDeps: AuthDeps = {
@@ -98,6 +101,7 @@ export function createApp({ env, db, logger, otpProvider }: AppDeps): Express {
   v1.use(profileRoutes(db));
   v1.use(serviceAreaRoutes(db));
   v1.use(adminPeopleRoutes(db));
+  v1.use(orderingRoutes(db, clock ?? (() => new Date())));
   app.use('/api/v1', v1);
 
   app.use(notFoundHandler);

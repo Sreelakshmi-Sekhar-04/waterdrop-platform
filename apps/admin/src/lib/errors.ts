@@ -9,12 +9,14 @@ export function errorText(t: TFunction, e: unknown): string {
       retryAfterSeconds?: number;
       area?: string;
       pincodes?: string[];
+      max?: number;
     };
     const text = t(`errors.${e.code}`, {
       count: d.attemptsLeft ?? 0,
       seconds: d.retryAfterSeconds ?? 30,
       area: d.area ?? '',
       pincodes: (d.pincodes ?? []).join(', '),
+      max: d.max ?? '',
       defaultValue: '',
     });
     if (text) return text;

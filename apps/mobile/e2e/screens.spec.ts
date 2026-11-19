@@ -32,22 +32,6 @@ test('phone sign-in: Send code stays off until the number is a valid Indian mobi
   await expect(send).toBeEnabled();
 });
 
-test('order: stepper changes the total, adds deposit for new cans, and stops at the maximum', async ({
-  page,
-}) => {
-  await open(page, '/order', 'Your order');
-  // Demo: 2 cans × ₹40, customer already holds 2 deposit-covered cans.
-  await expect(page.getByRole('button', { name: 'Place order · ₹80' })).toBeVisible();
-  const more = page.getByRole('button', { name: 'One more: cans' });
-  await more.click();
-  // 3 × ₹40 + one new can's ₹150 deposit = ₹270.
-  await expect(page.getByRole('button', { name: 'Place order · ₹270' })).toBeVisible();
-  await expect(page.getByText(/refundable deposit of ₹150 for 1 new can/)).toBeVisible();
-  for (let i = 0; i < 10; i++) if (await more.isEnabled()) await more.click();
-  await expect(more).toBeDisabled();
-  await expect(page.getByText('For more than 10 cans, please call us')).toBeVisible();
-});
-
 test('staff delivered: live can balance and the extra-empties warning', async ({ page }) => {
   await open(page, '/deliver?stop=10', 'Rajan K.');
   // Had 2, ordered 3, empties default to 2 → keeps 3.
@@ -74,10 +58,6 @@ test('staff not delivered: a note is needed only for "Something else"', async ({
 });
 
 const SCREENS: [string, string | RegExp][] = [
-  ['/home', 'Need water today?'],
-  ['/order', 'Your order'],
-  ['/placed', 'Order placed'],
-  ['/orders', /orders/i],
   ['/help', /help/i],
   ['/route', "Today's route"],
   ['/deliver?stop=10', 'Rajan K.'],

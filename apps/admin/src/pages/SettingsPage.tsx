@@ -1,13 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { pincodeSchema, serviceAreaInputSchema } from '@wtrdrop/shared';
+import { formatINR, pincodeSchema, serviceAreaInputSchema } from '@wtrdrop/shared';
 import { call } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { isOwner, useAuth } from '../lib/auth';
 import { Dialog } from '../components/Dialog';
 import { Chip, LiveMessage, PageHeader, TableWrap } from '../components/ui';
 import { TeamTable } from '../components/TeamTable';
+import {
+  ClosedDaySettings,
+  PriceSettings,
+  WindowSettings,
+  rupeesToPaise,
+} from '../components/OrderingSettings';
 
 interface Area {
   id: string;
@@ -15,6 +21,8 @@ interface Area {
   nameMl: string | null;
   pincodes: string[];
   status: 'active' | 'disabled';
+  deliveryChargePaise: number | null;
+  freeAboveCans: number | null;
 }
 
 export function SettingsPage() {
@@ -23,6 +31,20 @@ export function SettingsPage() {
   return (
     <div className="page">
       <PageHeader title={t('nav.settings')} />
+      <section aria-labelledby="price-h">
+        <h2 id="price-h">{t('settings.price')}</h2>
+        <PriceSettings />
+      </section>
+      <section aria-labelledby="windows-h">
+        <h2 id="windows-h">{t('settings.windows')}</h2>
+        <p className="muted">{t('settings.windowsHelp')}</p>
+        <WindowSettings />
+      </section>
+      <section aria-labelledby="closed-h">
+        <h2 id="closed-h">{t('settings.closedDays')}</h2>
+        <p className="muted">{t('settings.closedDaysHelp')}</p>
+        <ClosedDaySettings />
+      </section>
       <section aria-labelledby="areas-h">
         <h2 id="areas-h">{t('settings.areas')}</h2>
         <p className="muted">{t('settings.areasHelp')}</p>
@@ -78,6 +100,7 @@ function ServiceAreas() {
               <tr>
                 <th scope="col">{t('settings.areaName')}</th>
                 <th scope="col">{t('settings.pincodes')}</th>
+                <th scope="col">{t('settings.deliveryCharge')}</th>
                 <th scope="col">{t('team.cols.status')}</th>
                 <th scope="col">{t('team.cols.actions')}</th>
               </tr>
@@ -94,6 +117,18 @@ function ServiceAreas() {
                     ) : null}
                   </th>
                   <td className="wrap">{a.pincodes.join(', ')}</td>
+                  <td className="wrap">
+                    {a.deliveryChargePaise === null && a.freeAboveCans === null
+                      ? t('settings.chargeDefault')
+                      : a.deliveryChargePaise
+                        ? a.freeAboveCans
+                          ? t('settings.chargeFreeAbove', {
+                              amount: formatINR(a.deliveryChargePaise),
+                              count: a.freeAboveCans,
+                            })
+                          : formatINR(a.deliveryChargePaise)
+                        : t('settings.chargeFree')}
+                  </td>
                   <td>
                     {a.status === 'active' ? (
                       <Chip tone="success">{t('common.active')}</Chip>
@@ -144,6 +179,8 @@ function AreaDialog({
   const [nameMl, setNameMl] = useState<string | null>(null);
   const [pins, setPins] = useState<string | null>(null);
   const [active, setActive] = useState<boolean | null>(null);
+  const [charge, setCharge] = useState<string | null>(null);
+  const [freeAbove, setFreeAbove] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const v = {
@@ -151,7 +188,16 @@ function AreaDialog({
     nameMl: nameMl ?? existing?.nameMl ?? '',
     pins: pins ?? existing?.pincodes.join(', ') ?? '',
     active: active ?? (existing ? existing.status === 'active' : true),
+    charge:
+      charge ??
+      (existing?.deliveryChargePaise != null ? String(existing.deliveryChargePaise / 100) : ''),
+    freeAbove: freeAbove ?? (existing?.freeAboveCans != null ? String(existing.freeAboveCans) : ''),
   };
+  // Blank means "use the business-wide setting"; 0 means free in this area.
+  const chargePaise = v.charge.trim() ? rupeesToPaise(v.charge) : null;
+  const badCharge = !!v.charge.trim() && chargePaise === null;
+  const freeAboveCans = /^\d{1,3}$/.test(v.freeAbove.trim()) ? Number(v.freeAbove) : null;
+  const badFreeAbove = !!v.freeAbove.trim() && freeAboveCans === null;
   const pincodes = v.pins.split(/[\s,]+/).filter(Boolean);
   const badPins = pincodes.filter((p) => !pincodeSchema.safeParse(p).success);
   const input = {
@@ -159,6 +205,8 @@ function AreaDialog({
     nameMl: v.nameMl || null,
     pincodes,
     status: v.active ? ('active' as const) : ('disabled' as const),
+    deliveryChargePaise: chargePaise,
+    freeAboveCans,
   };
   const check = serviceAreaInputSchema.safeParse(input);
   const close = () => {
@@ -166,13 +214,15 @@ function AreaDialog({
     setNameMl(null);
     setPins(null);
     setActive(null);
+    setCharge(null);
+    setFreeAbove(null);
     setTried(false);
     setError(null);
     onClose();
   };
   const save = async () => {
     setTried(true);
-    if (!check.success || badPins.length) return;
+    if (!check.success || badPins.length || badCharge || badFreeAbove) return;
     try {
       if (existing)
         await call(`/admin/service-areas/${existing.id}`, { method: 'PATCH', body: input });
@@ -231,6 +281,35 @@ function AreaDialog({
             </span>
           )}
         </label>
+        <div className="field-row">
+          <label className="field">
+            <span>{t('settings.chargeLabel')}</span>
+            <input
+              inputMode="decimal"
+              value={v.charge}
+              onChange={(e) => setCharge(e.target.value)}
+              aria-invalid={tried && badCharge}
+              aria-describedby="charge-hint"
+            />
+          </label>
+          <label className="field">
+            <span>{t('settings.freeAboveLabel')}</span>
+            <input
+              inputMode="numeric"
+              value={v.freeAbove}
+              onChange={(e) => setFreeAbove(e.target.value)}
+              aria-invalid={tried && badFreeAbove}
+              aria-describedby="charge-hint"
+            />
+          </label>
+        </div>
+        {tried && (badCharge || badFreeAbove) ? (
+          <span className="field-error">{t('settings.badCharge')}</span>
+        ) : (
+          <span id="charge-hint" className="field-hint">
+            {t('settings.chargeHint')}
+          </span>
+        )}
         {existing ? (
           <label className="check">
             <input

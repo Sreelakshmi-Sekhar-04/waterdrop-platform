@@ -6,11 +6,11 @@ Read this file first at the start of every Claude Code session. Update it at the
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 3: Sign-in, users and addresses** (complete, waiting for review) |
-| Phase status | Phase 2 approved 19 Nov 2026 ("go-ahead for Phase 3"). Phase 3 delivered 19 Nov on branch `phase-3-auth` (built on `phase-2-ui`). **Waiting for Sreelakshmi's review** before Phase 4. |
-| Next step | Review the Phase 3 report below, then Phase 4 (ordering: customer orders, admin orders, slots). |
-| Coding started? | Yes. Do not start Phase 4 until Phase 3 is reviewed. |
-| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-3-auth`. |
+| Current phase | **Phase 4: Ordering and capacity** (complete, waiting for review) |
+| Phase status | Phase 3 approved 19 Nov 2026 ("start Phase 4"). Phase 4 delivered 19 Nov on branch `phase-4-ordering` (built on `phase-3-auth`). **Waiting for Sreelakshmi's review** before Phase 5. |
+| Next step | Review the Phase 4 report below, then Phase 5 (delivery: driver assignment, route, delivery with can counts, can ledger). |
+| Coding started? | Yes. Do not start Phase 5 until Phase 4 is reviewed. |
+| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-4-ordering`. |
 | Docs location | Repo `docs/` is the source of truth from Phase 1. Project files `wtrdrop/docs/` hold a copy. |
 
 ## Key references
@@ -206,3 +206,56 @@ Defects found and fixed during Phase 3: (a) reusing an old refresh token did not
 **11. Deviations from the original requirements** — none. Office sign-in uses SMS code plus password, and staff use SMS once plus a PIN, as approved in D-02.
 
 **12. Recommended next step** — Phase 4: ordering. Customers place and repeat orders in two taps, the office creates orders for phone-in customers, delivery slots and the cut-off time, and order status from placed to assigned.
+
+### Phase 4: Ordering and capacity (19 Nov 2026)
+
+**1. What was completed**
+- Customers order in one screen: the quantity is pre-filled with their last order (else 2), the earliest delivery time is pre-selected, and the total (cans, delivery charge, can deposit) is shown before "Place order". A double tap or a retry saves one order. If the price changed meanwhile, the app shows the new total and asks again.
+- After placing: confirmation and tracking screen, order list with "Order again", and cancel (two steps) until the order is out for delivery.
+- Delivery times with a number of cans each. Capacity is taken when the order is placed and given back on cancel or reject; two customers ordering at the same moment can never overbook. Same-day cut-off (DEMO 14:00) for customers. Closed days (whole day or one time) with a reason.
+- Prices: standard can price with dated changes (owner only, today or later), a customer's own price, delivery charge per area with "free above N cans". Every order keeps the price and address it was placed with.
+- Automatic acceptance (setting on by default). With it off, the office accepts one by one or in bulk; rejecting or cancelling needs a reason. Every status change is kept in an append-only history.
+- Admin portal, now real: **Orders** (any day, capacity per delivery time, filters, search by name, area, last 4 digits or WD-number, bulk accept), **order page** (customer, address, price lines, history, accept / reject / cancel with reason), **New order** for a phone caller from the Orders page, the Today page or a customer's page, the customer's orders and own price on their page, and **Settings** for the can price, delivery times, closed days and area delivery charges.
+- The demo orders were removed from the admin portal and the customer app. Today's numbers and drivers are still demo (Phases 5 to 7) and labelled.
+
+**2. Files created or changed**
+- Shared: `packages/shared/src/ordering.ts` (+ tests), `people.ts` (area charge fields).
+- API: `src/db/schema.ts`, migration `0003_phase4_ordering.sql` (8 tables, 2 enums, append-only trigger), `src/db/seed.ts` (DEMO product, price and 3 delivery times), `src/modules/ordering/{catalog,windows,orders}.service.ts`, `ordering.routes.ts`, `service-areas.service.ts`, `app.ts` (clock for tests), `test/{helpers,orders.test}.ts`.
+- Mobile: `src/lib/orders.ts`, `(customer)/{home,order,placed,orders}.tsx`, `RoleGate`, `Screen`, demo fixtures, locales, `e2e/{ordering.spec,screens.spec,support}.ts`.
+- Admin: `src/lib/{orders,errors}.ts`, `src/pages/{Orders,OrderDetail,Settings,Today,CustomerDetail}Page.tsx`, `src/components/{NewOrderDialog,CustomerOrders,OrderingSettings,Dialog}.tsx`, `App.tsx`, `styles.css`, locales, demo fixtures, `e2e/portal.spec.ts`.
+- Docs: `docs/adr/0003-ordering-and-capacity.md`, README API table, this report, change log.
+
+**3. Architecture and design decisions** — see ADR 0003. In short: capacity is a counter per delivery time and date, taken with one conditional database update inside the order's transaction; prices are dated rows, so a price change never touches past orders; the app sends the total it showed and the server refuses a mismatch; order history is append-only in the database itself.
+
+**4. APIs and database changes**
+- 23 new endpoints (README table): customer ordering (5), office orders (6), delivery times, capacity and closed days (8), prices (4).
+- Database: new tables `products`, `product_prices`, `customer_prices`, `delivery_windows`, `window_bookings`, `closed_days`, `orders`, `order_items`, `order_status_history`; enums for order status and channel; `suppliers.next_order_no`; `service_areas.delivery_charge_paise` and `free_above_cans`.
+
+**5. Tests executed** (all run on 19 Nov 2026 in the development container, PostgreSQL 16)
+- `pnpm lint`, `pnpm typecheck` (all packages), `prettier --check`, `pnpm check:i18n` (admin 392 texts, mobile 245)
+- `pnpm test`: design tokens 12, shared 40 (9 new), API 97 in 7 files against a real database (19 new ordering tests: bookable times and the cut-off, price and address saved on the order, auto-accept, double submit, price changed, maximum quantity for customers versus office, area charge and free limit, switched-off customer, 4 orders at the same moment for a time with room for 2, cans given back on cancel, too late to cancel, closed days, auto-accept off with bulk accept and reject with reason, office booking after the cut-off but not after a time has ended, office list and search, owner-only dated prices, customer's own price, another customer's or supplier's orders, history cannot be edited)
+- Admin Playwright: 18 scenarios × desktop and phone = 36, against the real API. New: phone order from a customer's page (3 cans, ₹570), new order from the Orders page with search, the list moving to the delivery day, cancel with a required reason, delivery time add (wrong times refused) and switch off, close a day (reason required) and open it again, owner sets a future price (bad amount refused) and the office account cannot. axe WCAG 2 A/AA and no horizontal scroll on each new page.
+- Mobile Playwright: 19 tests at Pixel 7 size against the real API. New: first order (totals ₹380 → ₹570 as cans change), cancel, the maximum of 10, Malayalam.
+- `expo export --platform android` bundle build.
+
+**6. Actual test results** — all passed: 149 unit/integration tests, 36 admin browser tests, 19 mobile browser tests, translation check, Android bundle.
+
+Defects found and fixed during Phase 4: (a) every pop-up in the admin portal had the same id for its title, so screen readers could announce the wrong title when a page has several (from Phase 2); each now has its own. (b) The office could book a delivery time that had already ended today; it now can until the time ends. (c) A badly typed date in a request could crash validation instead of returning "invalid"; fixed. (d) On the web preview of the app, the scrolling screen could not be reached with the keyboard (accessibility check); fixed. (e) The status column of the Orders table was cut off on a laptop screen; the customer column now wraps.
+
+**7. Known defects and limitations**
+- The can deposit on an order is an estimate (every can counts as new) until the can ledger in Phase 5 records cans held and returned.
+- Orders cannot yet be given to a driver; "Needs a driver" fills up and waits for Phase 5. Dues and credit-limit warnings are Phase 6. Customers get no SMS or push message about their order yet.
+- Closing a day does not move or cancel orders already booked; the office is told how many and phones them.
+- All prices, delivery times and capacities are DEMO values; set the real ones in Settings before launch.
+- Malayalam texts are still draft translations and need a native speaker's review.
+- Real SMS is still not connected (Phase 3 limitation), Maestro tests on an Android device have not run, and the branch has not been pushed (GitHub App still missing).
+
+**8. Security considerations** — every order query is limited to the signed-in supplier, and customers see only their own orders (tested). The server works out every price and total itself; the app's total is only compared, never trusted. Price changes are owner-only and audited, as are every order change, delivery time and closed day. The office order list shows only the last 4 digits of a phone number. Order history cannot be changed even by a database user of the app.
+
+**9. Pending decisions** — none blocking. Needed before launch: the real can price, deposit, delivery charges per area, delivery times and how many cans each can take, and the same-day cut-off time.
+
+**10. Recommendations** — enter the real price, delivery times and capacities in Settings so Phase 5 testing uses realistic numbers. Decide whether office orders should always be accepted at once (current) or follow the auto-accept setting like app orders.
+
+**11. Deviations from the original requirements** — none. The details left open by the approved decisions are recorded in ADR 0003 and the change log.
+
+**12. Recommended next step** — Phase 5: delivery. Give orders to drivers by area, the driver's route for the day, delivery with full and empty can counts, failed delivery and reschedule, and the can ledger that makes the deposit exact.

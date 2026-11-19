@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { formatINR } from '@wtrdrop/shared';
 import { demoAttention, demoDrivers, demoStats } from '../demo/fixtures';
 import { Chip, DemoBadge, LiveMessage, PageHeader, SearchField, TableWrap } from '../components/ui';
+import { NewOrderDialog, createdText } from '../components/NewOrderDialog';
 
 const ATTENTION_LINK: Record<(typeof demoAttention)[number]['id'], string> = {
   unassigned: '/orders?show=needsDriver',
@@ -17,6 +18,7 @@ export function TodayPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const today = new Intl.DateTimeFormat(i18n.language === 'ml' ? 'ml-IN' : 'en-IN', {
     weekday: 'long',
     day: 'numeric',
@@ -48,17 +50,18 @@ export function TodayPage() {
                 onChange={setQuery}
               />
             </form>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => setMessage(t('today.newOrderDemo'))}
-            >
+            <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
               {t('today.newOrder')}
             </button>
           </>
         }
       />
-      <LiveMessage text={message} />
+      <LiveMessage text={message} tone="success" />
+      <NewOrderDialog
+        open={adding}
+        onClose={() => setAdding(false)}
+        onCreated={(o) => setMessage(createdText(t, o))}
+      />
 
       <section aria-labelledby="attention-h">
         <h2 id="attention-h">{t('today.attention')}</h2>

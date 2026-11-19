@@ -153,7 +153,7 @@
   },
   "common": {
     "back": "Back",
-    "previewBanner": "Demo data on this screen · real orders arrive in Phase 4",
+    "previewBanner": "Demo data on this screen · real deliveries arrive in Phase 5",
     "simulated": "Preview only: this action is connected in a later phase.",
     "saving": "Saving…",
     "cancel": "Cancel"
@@ -245,6 +245,39 @@
     "TOO_MANY_ADDRESSES": "Up to 10 addresses can be saved.",
     "VALIDATION_FAILED": "Some details are missing or incorrect.",
     "UNAUTHENTICATED": "Please sign in again.",
-    "RATE_LIMITED": "Too many requests. Please wait a minute and try again."
+    "RATE_LIMITED": "Too many requests. Please wait a minute and try again.",
+    "WINDOW_FULL": "This delivery time just filled up. Please choose another time.",
+    "TOO_LATE_FOR_WINDOW": "It is too late to book this time. Please choose a later time.",
+    "DAY_CLOSED": "We are not delivering at this time. Please choose another day.",
+    "WINDOW_NOT_AVAILABLE": "This delivery time is not available. Please choose another.",
+    "PRICE_CHANGED": "The price has changed. Please check the new total and tap again.",
+    "QTY_ABOVE_MAX": "That is more cans than one order allows. Please call us for big orders.",
+    "TOO_LATE_TO_CANCEL": "This order is already on the way. Please call us.",
+    "INVALID_TRANSITION": "This order cannot be changed now.",
+    "SETUP_INCOMPLETE": "Ordering is not open yet. Please call us.",
+    "NOT_FOUND": "We could not find this. Please go back and try again."
+  },
+  "order": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "windowLabel": "{{day}}, {{name}} ({{from}} – {{to}})",
+    "deliveryCharge": "delivery {{amount}}",
+    "placing": "Placing order…",
+    "yourPrice": "your price",
+    "changeAddress": "Change delivery address",
+    "addAddress": "Add an address",
+    "noWindows": "No delivery times are free in the next 7 days. Please call us.",
+    "almostFull_one": "Only {{count}} can left",
+    "almostFull_other": "Only {{count}} cans left",
+    "number": "Order {{no}}",
+    "cancelConfirm": "Cancel this order?",
+    "cancelYes": "Yes, cancel the order",
+    "keep": "No, keep it",
+    "depositIncluded": "Includes {{amount}} refundable deposit for new cans",
+    "keepEmptiesReady": "Keep your empty cans ready to swap",
+    "noneYet": "No orders yet",
+    "first": "Order water",
+    "details": "See order",
+    "detailsOrCancel": "See or cancel order"
   }
 }

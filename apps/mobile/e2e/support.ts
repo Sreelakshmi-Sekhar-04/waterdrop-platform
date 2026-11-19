@@ -45,3 +45,20 @@ export async function fitsPhoneWidth(page: Page) {
   );
   expect(overflow).toBeLessThanOrEqual(0);
 }
+
+/** New customer from the welcome screen to the home screen, with an address in a DEMO area. */
+export async function signUpCustomer(page: Page, phone: string, name = 'Anitha R') {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await signInWithCode(page, phone);
+  await expect(page.getByText('Welcome to WtrDrop')).toBeVisible({ timeout: 15_000 });
+  await page.getByLabel('Your name').fill(name);
+  await page.getByRole('checkbox').click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByText('Where should we deliver?')).toBeVisible({ timeout: 15_000 });
+  await page.getByLabel('House name, number and street').fill('Rose Villa, 12/4, 2nd lane');
+  await page.getByLabel('Landmark').fill("Near St. Mary's Church");
+  await page.getByLabel('PIN code').fill('682030');
+  await page.getByRole('button', { name: 'Save address' }).click();
+  await expect(page.getByText('Need water today?')).toBeVisible({ timeout: 15_000 });
+}

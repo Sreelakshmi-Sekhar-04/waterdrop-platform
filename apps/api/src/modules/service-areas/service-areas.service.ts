@@ -11,6 +11,8 @@ const columns = {
   name: serviceAreas.name,
   nameMl: serviceAreas.nameMl,
   pincodes: serviceAreas.pincodes,
+  deliveryChargePaise: serviceAreas.deliveryChargePaise,
+  freeAboveCans: serviceAreas.freeAboveCans,
   status: serviceAreas.status,
 };
 
@@ -87,6 +89,8 @@ export async function createServiceArea(db: Database, ctx: TenantContext, input:
         name: input.name,
         nameMl: input.nameMl ?? null,
         pincodes,
+        deliveryChargePaise: input.deliveryChargePaise ?? null,
+        freeAboveCans: input.freeAboveCans ?? null,
       })
       .onConflictDoNothing()
       .returning(columns);
@@ -123,6 +127,12 @@ export async function updateServiceArea(
         name: input.name ?? before.name,
         nameMl: input.nameMl === undefined ? before.nameMl : input.nameMl,
         pincodes,
+        deliveryChargePaise:
+          input.deliveryChargePaise === undefined
+            ? before.deliveryChargePaise
+            : input.deliveryChargePaise,
+        freeAboveCans:
+          input.freeAboveCans === undefined ? before.freeAboveCans : input.freeAboveCans,
         status: input.status ?? before.status,
         updatedAt: new Date(),
       })

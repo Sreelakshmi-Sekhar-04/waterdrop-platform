@@ -1,10 +1,8 @@
 /**
- * DEMO DATA for Phase 2 screen previews only. Every value here is made up.
- * Real data replaces these when each feature is connected (Phases 3–6).
+ * DEMO DATA for the delivery staff screens only (customer screens are real since Phase 4).
+ * Every value here is made up. Real routes replace them in Phase 5.
  * Prices follow the placeholder business values in docs/REQUIREMENTS-CHANGELOG.md Part 4.
  */
-import type { OrderStatus } from '@wtrdrop/shared';
-
 export const DEMO = true;
 
 export const demoSettings = {
@@ -13,36 +11,6 @@ export const demoSettings = {
   maxCansPerOrder: 10,
   staffUndoWindowMinutes: 10,
 };
-
-export const demoCustomer = {
-  name: 'Anitha',
-  cansHeld: 2,
-  depositCoverCans: 2,
-  duePaise: 0,
-  usualQty: 2,
-  address: { label: 'Home', line: "Near St. Mary's Church, 2nd lane" },
-};
-
-export const demoSlots = [
-  { value: 'today-eve', label: 'Today, 4–7 pm', earliest: true },
-  { value: 'tom-morn', label: 'Tomorrow, 7–11 am', earliest: false },
-  { value: 'tom-eve', label: 'Tomorrow, 4–7 pm', earliest: false },
-] as const;
-
-export interface DemoOrder {
-  id: string;
-  date: string;
-  qty: number;
-  totalPaise: number;
-  status: OrderStatus;
-}
-
-export const demoOrders: DemoOrder[] = [
-  { id: 'WD-1042', date: 'Today', qty: 2, totalPaise: 8000, status: 'ACCEPTED' },
-  { id: 'WD-0988', date: 'Mon, 16 Nov', qty: 2, totalPaise: 8000, status: 'DELIVERED' },
-  { id: 'WD-0951', date: 'Thu, 12 Nov', qty: 3, totalPaise: 12000, status: 'DELIVERED' },
-  { id: 'WD-0907', date: 'Sun, 8 Nov', qty: 2, totalPaise: 8000, status: 'CANCELLED' },
-];
 
 export interface DemoStop {
   n: number;

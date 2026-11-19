@@ -1,5 +1,6 @@
 /**
- * Seeds one DEMO supplier with DEMO settings and DEMO service areas. Safe to run more than once.
+ * Seeds one DEMO supplier with DEMO settings, service areas, product, price and delivery times.
+ * Safe to run more than once.
  * Optionally creates the first owner account from SEED_OWNER_PHONE.
  * No passwords, OTPs or secrets are created here.
  */
@@ -8,7 +9,16 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { indianMobileSchema } from '@wtrdrop/shared';
 import { createDb, type Database } from './client';
-import { serviceAreas, settings, suppliers, userRoles, users } from './schema';
+import {
+  deliveryWindows,
+  productPrices,
+  products,
+  serviceAreas,
+  settings,
+  suppliers,
+  userRoles,
+  users,
+} from './schema';
 import { DEMO_SETTINGS } from '../modules/settings/settings.schema';
 
 export const DEMO_SUPPLIER_SLUG = 'demo';
@@ -60,6 +70,64 @@ export async function seed(db: Database, ownerPhone?: string): Promise<{ supplie
           name: 'Infopark (demo)',
           nameMl: 'ഇൻഫോപാർക്ക് (ഡെമോ)',
           pincodes: ['682042'],
+        },
+      ])
+      .onConflictDoNothing();
+
+    // DEMO product, price and delivery times (Part 4 placeholders: ₹40 per can, Mon–Sat 7 am–7 pm).
+    await tx
+      .insert(products)
+      .values({
+        supplierId: supplier.id,
+        sku: 'CAN-20L',
+        nameEn: '20 litre water can',
+        nameMl: '20 ലിറ്റർ വെള്ളം ക്യാൻ',
+      })
+      .onConflictDoNothing();
+    const [product] = await tx
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.supplierId, supplier.id))
+      .limit(1);
+    await tx
+      .insert(productPrices)
+      .values({
+        supplierId: supplier.id,
+        productId: product!.id,
+        pricePaise: 4000,
+        validFrom: '2026-01-01',
+      })
+      .onConflictDoNothing();
+    const monSat = [1, 2, 3, 4, 5, 6];
+    await tx
+      .insert(deliveryWindows)
+      .values([
+        {
+          supplierId: supplier.id,
+          nameEn: 'Morning',
+          nameMl: 'രാവിലെ',
+          startTime: '07:00',
+          endTime: '11:00',
+          capacityCans: 100,
+          daysOfWeek: monSat,
+        },
+        {
+          supplierId: supplier.id,
+          nameEn: 'Afternoon',
+          nameMl: 'ഉച്ചയ്ക്ക്',
+          startTime: '11:00',
+          endTime: '15:00',
+          capacityCans: 100,
+          daysOfWeek: monSat,
+        },
+        {
+          supplierId: supplier.id,
+          nameEn: 'Evening',
+          nameMl: 'വൈകുന്നേരം',
+          startTime: '15:00',
+          endTime: '19:00',
+          capacityCans: 100,
+          daysOfWeek: monSat,
         },
       ])
       .onConflictDoNothing();

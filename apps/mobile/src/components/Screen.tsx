@@ -19,7 +19,12 @@ export function Screen({ children, footer, nav }: Props) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+          // On the web a scrolling area must be reachable by keyboard even when it holds only text.
+          focusable={Platform.OS === 'web'}
+        >
           {children}
         </ScrollView>
         {footer ? <View style={styles.footer}>{footer}</View> : null}
