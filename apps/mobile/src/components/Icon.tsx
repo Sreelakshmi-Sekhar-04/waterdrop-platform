@@ -20,9 +20,23 @@ export type IconName =
   | 'note'
   | 'chat'
   | 'cloud-off'
-  | 'refresh';
+  | 'refresh'
+  | 'user'
+  | 'lock';
 
 const PATHS: Record<IconName, React.ReactNode> = {
+  user: (
+    <>
+      <Circle cx="12" cy="8" r="4" />
+      <Path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+    </>
+  ),
+  lock: (
+    <>
+      <Path d="M6 11h12v10H6z" />
+      <Path d="M8.5 11V8a3.5 3.5 0 017 0v3" />
+    </>
+  ),
   home: (
     <>
       <Path d="M3 11l9-7 9 7v9H3z" />

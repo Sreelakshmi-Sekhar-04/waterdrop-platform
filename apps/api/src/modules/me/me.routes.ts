@@ -18,6 +18,7 @@ export function meRoutes(db: Database): Router {
         preferredLanguage: users.preferredLanguage,
         userStatus: users.status,
         role: userRoles.role,
+        roleStatus: userRoles.status,
         supplierId: suppliers.id,
         supplierName: suppliers.name,
         supplierStatus: suppliers.status,
@@ -33,7 +34,12 @@ export function meRoutes(db: Database): Router {
         ),
       );
     // A disabled user, a removed role or a disabled supplier loses access immediately.
-    if (!row || row.userStatus !== 'active' || row.supplierStatus !== 'active') {
+    if (
+      !row ||
+      row.userStatus !== 'active' ||
+      row.roleStatus !== 'active' ||
+      row.supplierStatus !== 'active'
+    ) {
       throw errors.unauthenticated();
     }
     res.json({

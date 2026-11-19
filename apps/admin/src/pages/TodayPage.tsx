@@ -9,7 +9,7 @@ const ATTENTION_LINK: Record<(typeof demoAttention)[number]['id'], string> = {
   unassigned: '/orders?show=needsDriver',
   failed: '/orders?show=problems',
   cashShort: '/payments',
-  complaint: '/customers/c2',
+  complaint: '/customers',
 };
 
 export function TodayPage() {

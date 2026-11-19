@@ -6,10 +6,16 @@ import { PlaceholderPage } from './pages/PlaceholderPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
+import { StaffPage } from './pages/StaffPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { SignInPage } from './pages/SignInPage';
+import { AuthProvider, useAuth } from './lib/auth';
 
-const BUILT = new Set<string>(['/', '/orders', '/customers']);
+const BUILT = new Set<string>(['/', '/orders', '/customers', '/staff', '/settings']);
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+});
 
 const router = createBrowserRouter([
   {
@@ -20,6 +26,8 @@ const router = createBrowserRouter([
       { path: 'orders', element: <OrdersPage /> },
       { path: 'customers', element: <CustomersPage /> },
       { path: 'customers/:id', element: <CustomerDetailPage /> },
+      { path: 'staff', element: <StaffPage /> },
+      { path: 'settings', element: <SettingsPage /> },
       ...NAV_ITEMS.filter((i) => !BUILT.has(i.path)).map((i) => ({
         path: i.path.slice(1),
         element: <PlaceholderPage navKey={i.key} phase={i.phase} />,
@@ -29,10 +37,25 @@ const router = createBrowserRouter([
   },
 ]);
 
+/** Nothing in the portal is visible before an office sign-in. */
+function Gate() {
+  const { status } = useAuth();
+  if (status === 'loading')
+    return (
+      <p className="loading" role="status">
+        …
+      </p>
+    );
+  if (status === 'signedOut') return <SignInPage />;
+  return <RouterProvider router={router} />;
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <Gate />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

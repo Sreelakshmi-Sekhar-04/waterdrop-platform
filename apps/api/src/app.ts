@@ -14,6 +14,12 @@ import { healthRoutes } from './modules/health/health.routes';
 import { meRoutes } from './modules/me/me.routes';
 import { auditRoutes } from './modules/audit/audit.routes';
 import { settingsRoutes } from './modules/settings/settings.routes';
+import { authRoutes, ADMIN_CLIENT_HEADER } from './modules/auth/auth.routes';
+import { sessionIsOpen, type AuthDeps } from './modules/auth/auth.service';
+import { createOtpProvider, type OtpProvider } from './providers/otp';
+import { profileRoutes } from './modules/customers/profile.routes';
+import { adminPeopleRoutes } from './modules/people/people.routes';
+import { serviceAreaRoutes } from './modules/service-areas/service-areas.routes';
 
 export const API_VERSION = '0.1.0';
 
@@ -21,11 +27,22 @@ export interface AppDeps {
   env: Env;
   db: Database;
   logger: Logger;
+  /** Tests pass their own provider to read the code; otherwise chosen by OTP_PROVIDER. */
+  otpProvider?: OtpProvider;
 }
 
-export function createApp({ env, db, logger }: AppDeps): Express {
+export function createApp({ env, db, logger, otpProvider }: AppDeps): Express {
   const app = express();
   const tokens = new TokenService(env.JWT_SECRET);
+  const authDeps: AuthDeps = {
+    db,
+    tokens,
+    otp: otpProvider ?? createOtpProvider(env),
+    // A separate key derived from the JWT secret, so code hashes and tokens never share a key.
+    otpSecret: `${env.JWT_SECRET}:otp-v1`,
+    supplierSlug: env.DEFAULT_SUPPLIER_SLUG,
+    otpPerIpPerHour: env.OTP_PER_IP_PER_HOUR,
+  };
 
   app.disable('x-powered-by');
   app.set('trust proxy', env.TRUST_PROXY);
@@ -42,7 +59,13 @@ export function createApp({ env, db, logger }: AppDeps): Express {
     cors({
       origin: (origin, cb) => cb(null, !origin || env.CORS_ORIGINS.includes(origin)),
       credentials: true,
-      allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Request-Id'],
+      allowedHeaders: [
+        'Authorization',
+        'Content-Type',
+        'Idempotency-Key',
+        'X-Request-Id',
+        ADMIN_CLIENT_HEADER,
+      ],
       exposedHeaders: ['X-Request-Id', 'Idempotent-Replayed'],
     }),
   );
@@ -64,13 +87,17 @@ export function createApp({ env, db, logger }: AppDeps): Express {
     }),
   );
   app.use(express.json({ limit: '100kb' }));
-  app.use(authenticate(tokens));
+  app.use(authenticate(tokens, (id) => sessionIsOpen(db, id)));
 
   const v1 = express.Router();
   v1.use(healthRoutes(db, API_VERSION));
   v1.use(meRoutes(db));
   v1.use(auditRoutes(db));
   v1.use(settingsRoutes(db));
+  v1.use(authRoutes(db, env, authDeps));
+  v1.use(profileRoutes(db));
+  v1.use(serviceAreaRoutes(db));
+  v1.use(adminPeopleRoutes(db));
   app.use('/api/v1', v1);
 
   app.use(notFoundHandler);

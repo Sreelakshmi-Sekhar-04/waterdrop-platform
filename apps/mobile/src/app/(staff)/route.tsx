@@ -10,6 +10,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { Text } from '../../components/Text';
 import { EmptyState } from '../../components/EmptyState';
 import { demoRoute } from '../../demo/fixtures';
+import { useSessionState } from '../../lib/session';
 
 function Figure({
   value,
@@ -35,6 +36,7 @@ function Figure({
 /** The staff home: the next stop is always at the top with its two big actions. */
 export default function StaffRoute() {
   const { t } = useTranslation();
+  const { session, signOut } = useSessionState();
   const r = demoRoute;
   const [next, ...upcoming] = r.stops;
   const pct = Math.round((r.done / r.total) * 100);
@@ -143,6 +145,14 @@ export default function StaffRoute() {
             </View>
           ))}
         </View>
+      ) : null}
+      {session ? (
+        <Button
+          variant="secondary"
+          compact
+          label={t('staff.signOut', { name: session.name ?? '' })}
+          onPress={() => void signOut().then(() => router.replace('/'))}
+        />
       ) : null}
     </Screen>
   );

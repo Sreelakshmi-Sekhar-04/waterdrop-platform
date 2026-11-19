@@ -3,7 +3,8 @@
     "tagline": "Pure Water. Delivered with Care.",
     "chooseLanguage": "Choose your language",
     "continue": "Continue",
-    "devPreview": "Preview screens (development only)"
+    "devPreview": "Preview screens (development only)",
+    "staffSignIn": "Delivery staff sign-in"
   },
   "auth": {
     "phoneTitle": "Your mobile number",
@@ -18,12 +19,16 @@
     "resendIn": "Send a new code in {{seconds}} s",
     "resend": "Send a new code",
     "changeNumber": "Change number",
-    "notYet": "Sign-in is connected in Phase 3. This screen shows the layout only."
+    "staffPhoneTitle": "Staff sign-in",
+    "sending": "Sending…",
+    "checking": "Checking…",
+    "codeSentAgain": "A new code has been sent."
   },
   "nav": {
     "home": "Home",
     "orders": "My orders",
-    "help": "Help"
+    "help": "Help",
+    "account": "Account"
   },
   "customer": {
     "greeting": "Hello, {{name}}",
@@ -130,7 +135,8 @@
     "noteOptional": "Note (optional)",
     "saveReason": "Save and go to next stop",
     "routeEmpty": "No stops assigned yet. The office will send today's route.",
-    "noteRequired": "Note (needed for \"Something else\")"
+    "noteRequired": "Note (needed for \"Something else\")",
+    "signOut": "Sign out ({{name}})"
   },
   "states": {
     "loading": "Loading",
@@ -147,7 +153,98 @@
   },
   "common": {
     "back": "Back",
-    "previewBanner": "Development preview · demo data",
-    "simulated": "Preview only: this action is connected in a later phase."
+    "previewBanner": "Demo data on this screen · real orders arrive in Phase 4",
+    "simulated": "Preview only: this action is connected in a later phase.",
+    "saving": "Saving…",
+    "cancel": "Cancel"
+  },
+  "pin": {
+    "setTitle": "Choose a 4-digit PIN",
+    "confirmTitle": "Type the PIN again",
+    "setBody": "You will use this PIN to open the app on this phone each day. Do not share it.",
+    "signInTitle": "Enter your PIN",
+    "label": "PIN",
+    "entered_one": "{{count}} of 4 digits entered",
+    "entered_other": "{{count}} of 4 digits entered",
+    "delete": "Delete last digit",
+    "mismatch": "The two PINs were different. Please start again.",
+    "useCode": "Forgot PIN? Sign in with an SMS code"
+  },
+  "profile": {
+    "welcomeTitle": "Welcome to WtrDrop",
+    "welcomeBody": "Tell us your name so our delivery staff know who to ask for.",
+    "nameLabel": "Your name",
+    "privacyTitle": "Your privacy",
+    "privacyBody": "We use your phone number, name and address only to take and deliver your orders and to keep your can and payment records. We do not sell or share them for advertising. You can ask us to delete your account at any time.",
+    "privacyAccept": "I agree to this privacy notice",
+    "continue": "Continue"
+  },
+  "address": {
+    "firstTitle": "Where should we deliver?",
+    "firstBody": "One address is enough. You can add more later.",
+    "addTitle": "Add address",
+    "editTitle": "Change address",
+    "labelLabel": "Address name",
+    "home": "Home",
+    "office": "Office",
+    "other": "Other",
+    "otherLabel": "Name for this address",
+    "lineLabel": "House name, number and street",
+    "lineHint": "For example: Rose Villa, 12/4, 2nd lane",
+    "landmarkLabel": "Landmark",
+    "landmarkHint": "Something the driver can see: a church, school or shop",
+    "pincodeLabel": "PIN code",
+    "weDeliver": "We deliver to: {{areas}}",
+    "noteLabel": "Note for the driver (optional)",
+    "noteHint": "For example: gate is locked, call when outside",
+    "useLocation": "Save my current location",
+    "locating": "Finding you…",
+    "locationSaved": "Location saved",
+    "locationWhy": "Optional. Helps the driver find you; use it while you are at this address.",
+    "locationDenied": "Location permission was not given. You can still save the address without it.",
+    "locationFailed": "Could not find your location. You can still save the address.",
+    "save": "Save address",
+    "errors": {
+      "label": "Enter a name for this address",
+      "line": "Enter the house name, number and street",
+      "landmark": "Enter a landmark",
+      "pincode": "Enter a 6-digit PIN code"
+    }
+  },
+  "account": {
+    "title": "Account",
+    "language": "Language",
+    "addresses": "Delivery addresses",
+    "default": "Default",
+    "edit": "Change",
+    "makeDefault": "Make default",
+    "remove": "Remove",
+    "removeLabel": "Remove address {{label}}",
+    "removeTitle": "Remove this address?",
+    "removeBody": "\"{{label}}\" will no longer be offered for new orders.",
+    "addAddress": "Add another address",
+    "signOut": "Sign out"
+  },
+  "errors": {
+    "NETWORK": "No internet connection. Please check and try again.",
+    "UNKNOWN": "Something went wrong. Please try again.",
+    "OTP_INVALID_one": "The code is wrong or has expired. {{count}} try left.",
+    "OTP_INVALID_other": "The code is wrong or has expired. {{count}} tries left.",
+    "OTP_TOO_MANY_ATTEMPTS": "Too many wrong codes. Tap \"Send a new code\".",
+    "OTP_RESEND_TOO_SOON": "Please wait {{seconds}} seconds before asking for a new code.",
+    "OTP_LIMIT": "Too many codes for this number today. Please try again later or call us.",
+    "OTP_SEND_FAILED": "We could not send the SMS. Please try again in a minute.",
+    "NOT_STAFF": "This number is not registered as delivery staff. Please ask the office.",
+    "ACCOUNT_DISABLED": "This account is switched off. Please call the office.",
+    "PIN_WRONG_one": "Wrong PIN. {{count}} try left.",
+    "PIN_WRONG_other": "Wrong PIN. {{count}} tries left.",
+    "PIN_LOCKED": "Too many wrong PINs. Please sign in with an SMS code.",
+    "PIN_NOT_SET": "Please sign in with an SMS code on this phone.",
+    "PIN_TOO_SIMPLE": "This PIN is too easy to guess. Please choose another.",
+    "OUTSIDE_SERVICE_AREA": "Sorry, we do not deliver to this PIN code yet.",
+    "TOO_MANY_ADDRESSES": "Up to 10 addresses can be saved.",
+    "VALIDATION_FAILED": "Some details are missing or incorrect.",
+    "UNAUTHENTICATED": "Please sign in again.",
+    "RATE_LIMITED": "Too many requests. Please wait a minute and try again."
   }
 }

@@ -6,8 +6,9 @@ WtrDrop runs a 20-litre drinking-water can delivery business: customers order an
 staff record cans and payments at the door, and the owner sees what needs attention, who holds how many cans, and
 who owes money.
 
-> **Status: Phase 1 (foundation).** The platform skeleton is built and tested. Sign-in (Phase 3), ordering (Phase 4)
-> and deliveries (Phase 5) are not built yet. See [docs/PROGRESS.md](docs/PROGRESS.md).
+> **Status: Phase 3 (sign-in, users and addresses).** Real sign-in, customer profiles and addresses, delivery areas and
+> staff and office accounts are built and tested. Ordering (Phase 4) and deliveries (Phase 5) are not built yet; those
+> screens show labelled demo data. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Repository layout
 
@@ -37,7 +38,20 @@ pnpm db:migrate
 pnpm db:seed                                  # one demo supplier with DEMO settings
 ```
 
-To create the first owner account, set `SEED_OWNER_PHONE` in `apps/api/.env` before seeding.
+To create the first owner account, set `SEED_OWNER_PHONE` in `apps/api/.env` before seeding. The seed also adds three
+DEMO delivery areas around Kochi; replace them in the portal under Settings.
+
+### SMS codes in development
+
+With `OTP_PROVIDER=dev-outbox` (development and tests only; refused when `NODE_ENV=production`) no SMS is sent. Each
+code is appended to the file in `OTP_DEV_OUTBOX` (default `.dev-outbox/sms.jsonl`, readable only by you):
+
+```bash
+tail -n 1 apps/api/.dev-outbox/sms.jsonl
+```
+
+For real SMS set `OTP_PROVIDER=msg91`, `MSG91_AUTH_KEY` and `MSG91_TEMPLATE_ID` (a DLT-approved template). The MSG91
+adapter has not yet been tried against a real MSG91 account. See `docs/adr/0002-sign-in-and-sessions.md`.
 
 ## Running
 
@@ -53,23 +67,49 @@ pnpm dev:mobile   # scan the QR code with Expo Go
 pnpm lint
 pnpm typecheck
 pnpm test          # unit tests + API integration tests (needs PostgreSQL, see below)
-pnpm test:e2e      # admin portal browser tests (Playwright)
-pnpm check:mobile  # bundles the mobile app for Android
+pnpm test:e2e         # admin portal browser tests (Playwright, real API, fresh test database)
+pnpm test:e2e:mobile  # mobile screens at phone size on the Expo web build (real API, fresh test database)
+pnpm check:mobile     # bundles the mobile app for Android
 ```
 
 API integration tests create and drop their own database per test file. Point `TEST_DATABASE_URL` at a PostgreSQL
 server where the user may create databases (default `postgres://wtrdrop@localhost:5432/postgres`). With the Docker
 database: `TEST_DATABASE_URL=postgres://wtrdrop:wtrdrop_local@localhost:5432/postgres pnpm test`.
 
-## API (Phase 1)
+The browser tests start the real API with `apps/api/src/e2e-server.ts`, which recreates a throwaway database
+(`wtrdrop_e2e_admin` or `wtrdrop_e2e_mobile`) on the same `TEST_DATABASE_URL` server, seeds test accounts and writes SMS
+codes to a local file that the tests read.
 
-| Method | Path                       | Who                                         |
-| ------ | -------------------------- | ------------------------------------------- |
-| GET    | `/api/v1/health`           | Anyone                                      |
-| GET    | `/api/v1/me`               | Any signed-in user                          |
-| GET    | `/api/v1/admin/settings`   | Admin, owner                                |
-| PATCH  | `/api/v1/admin/settings`   | Owner (audited, supports `Idempotency-Key`) |
-| GET    | `/api/v1/admin/audit-logs` | Admin, owner                                |
+## API
+
+All paths start with `/api/v1`. "Office" means the admin and owner roles. Every change by the office is audited.
+
+| Method              | Path                                          | Who                                                    |
+| ------------------- | --------------------------------------------- | ------------------------------------------------------ |
+| GET                 | `/health`                                     | Anyone                                                 |
+| POST                | `/auth/otp/request`                           | Anyone (same answer whether or not an account exists)  |
+| POST                | `/auth/otp/verify`                            | Anyone with the code; `app` = customer, staff or admin |
+| POST                | `/auth/admin/password/setup`                  | Office, first sign-in only (setup token)               |
+| POST                | `/auth/admin/password/change`                 | Office                                                 |
+| POST                | `/auth/staff/pin`                             | Delivery staff, after an SMS code on this phone        |
+| POST                | `/auth/staff/pin/sign-in`                     | Delivery staff on a phone with a PIN                   |
+| POST                | `/auth/refresh`, `/auth/sign-out`             | Any session                                            |
+| GET, PATCH          | `/me`                                         | Any signed-in user                                     |
+| GET, PUT            | `/customer/profile`                           | Customer                                               |
+| GET, POST           | `/customer/addresses`                         | Customer                                               |
+| PATCH, DELETE       | `/customer/addresses/:id`                     | Customer (delete archives)                             |
+| GET                 | `/service-areas`                              | Any signed-in user                                     |
+| GET, POST, PATCH    | `/admin/service-areas[/:id]`                  | Office                                                 |
+| GET, POST, PATCH    | `/admin/customers[/:id]`                      | Office                                                 |
+| POST, PATCH, DELETE | `/admin/customers/:id/addresses[/:addressId]` | Office                                                 |
+| GET, POST, PATCH    | `/admin/staff[/:userId]`                      | Office                                                 |
+| POST                | `/admin/staff/:userId/reset-pin`              | Office                                                 |
+| GET, POST, PATCH    | `/admin/team[/:userId]`                       | Owner                                                  |
+| GET, PATCH          | `/admin/settings`                             | Read: office. Change: owner                            |
+| GET                 | `/admin/audit-logs`                           | Office                                                 |
+
+POST and PATCH routes that create or change records accept an `Idempotency-Key` header. Office requests must send
+`X-WtrDrop-Client: admin`; the office refresh token is an httpOnly, SameSite=Strict cookie.
 
 Errors always look like `{ "error": { "code", "message", "requestId", "details?" } }`.
 

@@ -1,7 +1,7 @@
 /**
- * Phase 1 platform tables. Business tables (customers, orders, ledgers, …)
- * are added in the phase that builds each feature, following the ERD in
- * docs/PHASE-0-ANALYSIS.md §9.
+ * Phase 1 platform tables, plus Phase 3 users and addresses. Business tables
+ * (orders, ledgers, …) are added in the phase that builds each feature,
+ * following the ERD in docs/PHASE-0-ANALYSIS.md §9.
  *
  * Conventions: uuid primary keys, timestamptz everywhere, money in integer
  * paise, every tenant-owned row carries supplier_id.
@@ -9,6 +9,8 @@
 import { sql } from 'drizzle-orm';
 import {
   bigserial,
+  boolean,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -29,6 +31,7 @@ export const roleEnum = pgEnum('role', ROLES);
 export const recordStatusEnum = pgEnum('record_status', ['active', 'disabled']);
 export const languageEnum = pgEnum('language', ['en', 'ml']);
 export const idempotencyStateEnum = pgEnum('idempotency_state', ['in_progress', 'completed']);
+export const customerTypeEnum = pgEnum('customer_type', ['household', 'office', 'shop']);
 
 /** A water supplier (tenant). One row at launch; the design allows more later. */
 export const suppliers = pgTable('suppliers', {
@@ -49,6 +52,8 @@ export const users = pgTable('users', {
   name: text('name'),
   preferredLanguage: languageEnum('preferred_language').notNull().default('en'),
   status: recordStatusEnum('status').notNull().default('active'),
+  /** Admin portal only (decision D-02: OTP + password). argon2id hash; null until set. */
+  passwordHash: text('password_hash'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -65,6 +70,8 @@ export const userRoles = pgTable(
       .notNull()
       .references(() => suppliers.id, { onDelete: 'restrict' }),
     role: roleEnum('role').notNull(),
+    /** Switching a role off keeps the history; switching it back on reuses the row. */
+    status: recordStatusEnum('status').notNull().default('active'),
     createdAt: createdAt(),
   },
   (t) => [
@@ -89,6 +96,8 @@ export const sessions = pgTable(
     familyId: uuid('family_id').notNull(),
     refreshTokenHash: text('refresh_token_hash').notNull().unique(),
     userAgent: text('user_agent'),
+    /** Staff sessions are bound to the device the PIN was set on. */
+    deviceId: text('device_id'),
     createdAt: createdAt(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
@@ -174,4 +183,111 @@ export const settings = pgTable(
     updatedBy: uuid('updated_by').references(() => users.id, { onDelete: 'restrict' }),
   },
   (t) => [primaryKey({ columns: [t.supplierId, t.key] })],
+);
+
+// ---------------------------------------------------------------- Phase 3
+
+/** Areas the supplier delivers to. A new address must be inside one (by PIN code). */
+export const serviceAreas = pgTable(
+  'service_areas',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    name: text('name').notNull(),
+    nameMl: text('name_ml'),
+    pincodes: text('pincodes').array().notNull(),
+    status: recordStatusEnum('status').notNull().default('active'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('service_areas_supplier_name_uq').on(t.supplierId, t.name)],
+);
+
+/** A user's customer record with one supplier. Created on first sign-in or by the office. */
+export const customers = pgTable(
+  'customers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    type: customerTypeEnum('type').notNull().default('household'),
+    status: recordStatusEnum('status').notNull().default('active'),
+    /** DPDP Act consent: when and which version of the privacy notice was accepted. */
+    privacyAcceptedAt: timestamp('privacy_accepted_at', { withTimezone: true }),
+    privacyVersion: text('privacy_version'),
+    /** Who created the record: the customer in the app, or an office user (A-01). */
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'restrict' }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('customers_supplier_user_uq').on(t.supplierId, t.userId),
+    index('customers_supplier_idx').on(t.supplierId),
+  ],
+);
+
+/** Delivery addresses. Removed addresses are archived, not deleted, so old orders keep them. */
+export const addresses = pgTable(
+  'addresses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'restrict' }),
+    serviceAreaId: uuid('service_area_id')
+      .notNull()
+      .references(() => serviceAreas.id, { onDelete: 'restrict' }),
+    label: text('label').notNull(),
+    line: text('line').notNull(),
+    landmark: text('landmark').notNull(),
+    pincode: text('pincode').notNull(),
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
+    deliveryNote: text('delivery_note'),
+    isDefault: boolean('is_default').notNull().default(false),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('addresses_customer_idx').on(t.customerId),
+    // At most one default address per customer.
+    uniqueIndex('addresses_one_default_uq')
+      .on(t.customerId)
+      .where(sql`is_default and archived_at is null`),
+  ],
+);
+
+/** A staff member's PIN on one phone (decision D-02: SMS code once, then PIN). */
+export const staffDevices = pgTable(
+  'staff_devices',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    deviceId: text('device_id').notNull(),
+    pinHash: text('pin_hash').notNull(),
+    failedAttempts: integer('failed_attempts').notNull().default(0),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('staff_devices_active_uq')
+      .on(t.supplierId, t.userId, t.deviceId)
+      .where(sql`revoked_at is null`),
+  ],
 );

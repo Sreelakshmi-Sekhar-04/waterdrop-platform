@@ -10,11 +10,23 @@ import { Icon } from '../../components/Icon';
 import { Screen } from '../../components/Screen';
 import { Text } from '../../components/Text';
 import { demoCustomer, demoSettings, demoSlots } from '../../demo/fixtures';
+import { useProfile } from '../../lib/customer';
+import { useSession } from '../../lib/session';
 
 /** The 2-tap reorder home. The usual order is one big button. */
 export default function CustomerHome() {
   const { t } = useTranslation();
-  const c = demoCustomer;
+  const session = useSession();
+  // Real name and address from the account; the order numbers stay demo until Phase 4.
+  const profile = useProfile(!!session);
+  const defaultAddress = profile.data?.addresses.find((a) => a.isDefault);
+  const c = {
+    ...demoCustomer,
+    name: profile.data?.name ?? demoCustomer.name,
+    address: defaultAddress
+      ? { label: defaultAddress.label, line: defaultAddress.line }
+      : demoCustomer.address,
+  };
   const total = c.usualQty * demoSettings.pricePerCanPaise;
   const when = demoSlots[0].label;
 

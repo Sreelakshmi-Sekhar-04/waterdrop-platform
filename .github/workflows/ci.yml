@@ -42,6 +42,19 @@ jobs:
   admin-e2e:
     name: Admin portal browser tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wtrdrop
+          POSTGRES_PASSWORD: ci_only_password
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U wtrdrop" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # The browser tests start the real API on a fresh throwaway database (apps/api e2e-server).
+      TEST_DATABASE_URL: postgres://wtrdrop:ci_only_password@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -54,6 +67,19 @@ jobs:
   mobile-e2e:
     name: Mobile screens in a phone-sized browser
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wtrdrop
+          POSTGRES_PASSWORD: ci_only_password
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U wtrdrop" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # The browser tests start the real API on a fresh throwaway database (apps/api e2e-server).
+      TEST_DATABASE_URL: postgres://wtrdrop:ci_only_password@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

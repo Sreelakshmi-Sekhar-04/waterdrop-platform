@@ -21,6 +21,20 @@ const envSchema = z.object({
     ),
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(300),
+  /** The supplier the apps sign in to. One supplier at launch. */
+  DEFAULT_SUPPLIER_SLUG: z.string().min(1).default('demo'),
+  /**
+   * How sign-in codes are delivered.
+   * - msg91: real SMS through MSG91 (decision D-17). Needs the MSG91_* values.
+   * - dev-outbox: writes codes to a local file for development and automated tests.
+   *   Refused in production. The code is still random, hashed, expiring and limited.
+   */
+  OTP_PROVIDER: z.enum(['msg91', 'dev-outbox']).default('dev-outbox'),
+  OTP_DEV_OUTBOX: z.string().default('.dev-outbox/sms.jsonl'),
+  OTP_PER_IP_PER_HOUR: z.coerce.number().int().positive().default(30),
+  MSG91_AUTH_KEY: z.string().optional(),
+  MSG91_TEMPLATE_ID: z.string().optional(),
+  MSG91_BASE_URL: z.string().url().default('https://control.msg91.com'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -31,5 +45,16 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     const problems = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`);
     throw new Error(`Invalid environment configuration:\n${problems.join('\n')}`);
   }
-  return parsed.data;
+  const env = parsed.data;
+  if (env.NODE_ENV === 'production' && env.OTP_PROVIDER === 'dev-outbox') {
+    throw new Error(
+      'Invalid environment configuration:\n  - OTP_PROVIDER: dev-outbox is not allowed in production',
+    );
+  }
+  if (env.OTP_PROVIDER === 'msg91' && (!env.MSG91_AUTH_KEY || !env.MSG91_TEMPLATE_ID)) {
+    throw new Error(
+      'Invalid environment configuration:\n  - MSG91_AUTH_KEY and MSG91_TEMPLATE_ID are required for OTP_PROVIDER=msg91',
+    );
+  }
+  return env;
 }

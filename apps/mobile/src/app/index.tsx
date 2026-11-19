@@ -7,7 +7,10 @@ import { LogoMark } from '../components/Logo';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { setLanguage } from '../i18n';
-import { homeFor, useSession } from '../lib/session';
+import { useEffect, useState } from 'react';
+import { Pressable } from 'react-native';
+import { homeFor, useSessionState } from '../lib/session';
+import { KEYS, secure } from '../lib/storage';
 
 const PREVIEW_LINKS: { href: Href; label: string }[] = [
   { href: '/(customer)/home', label: 'Customer · Home' },
@@ -27,13 +30,33 @@ const PREVIEW_LINKS: { href: Href; label: string }[] = [
 /** First screen: brand, one-tap language choice, then sign-in. */
 export default function Welcome() {
   const { t, i18n } = useTranslation();
-  const session = useSession();
+  const { status, session } = useSessionState();
+  const [staffPin, setStaffPin] = useState<boolean | null>(null);
+  useEffect(() => {
+    void secure.get(KEYS.staffPinSet).then((v) => setStaffPin(v === '1'));
+  }, []);
+  if (status === 'loading' || staffPin === null) return null;
   const home = session ? homeFor(session.role) : null;
   if (home) return <Redirect href={home} />;
+  // A staff phone with a PIN goes straight to the PIN screen each morning.
+  if (staffPin) return <Redirect href="/(auth)/pin" />;
 
   return (
     <Screen
-      footer={<Button label={t('welcome.continue')} onPress={() => router.push('/(auth)/phone')} />}
+      footer={
+        <>
+          <Button label={t('welcome.continue')} onPress={() => router.push('/(auth)/phone')} />
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/(auth)/phone', params: { app: 'staff' } })}
+            style={styles.staffLink}
+          >
+            <Text variant="label" color={colors.primary} style={styles.center}>
+              {t('welcome.staffSignIn')}
+            </Text>
+          </Pressable>
+        </>
+      }
     >
       <View style={styles.hero}>
         <LogoMark size={112} />
@@ -68,7 +91,7 @@ export default function Welcome() {
         </View>
       </View>
 
-      {__DEV__ ? (
+      {__DEV__ && process.env.EXPO_PUBLIC_PREVIEW === '1' ? (
         <View style={styles.dev} testID="dev-preview">
           <Text variant="label" muted>
             {t('welcome.devPreview')}
@@ -93,4 +116,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   dev: { gap: spacing.xs, marginTop: spacing.xl },
   link: { paddingVertical: spacing.sm },
+  staffLink: { minHeight: 48, justifyContent: 'center' },
 });

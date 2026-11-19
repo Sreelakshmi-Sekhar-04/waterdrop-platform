@@ -7,13 +7,15 @@
     "stock": "Cans and stock",
     "payments": "Payments",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "staff": "Delivery staff"
   },
   "app": {
     "skipToContent": "Skip to main content",
     "language": "മലയാളം",
     "languageLabel": "Switch language to Malayalam",
-    "foundationNotice": "Design preview: pages show made-up demo data and nothing is saved. Sign-in arrives in Phase 3."
+    "foundationNotice": "Today and Orders still show made-up demo data (ordering arrives in Phase 4). Customers, Delivery staff and Settings are real.",
+    "signOut": "Sign out"
   },
   "today": {
     "title": "Good morning",
@@ -72,7 +74,12 @@
   },
   "common": {
     "clear": "Clear selection",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "loading": "Loading…",
+    "active": "Active",
+    "switchedOff": "Switched off",
+    "edit": "Change",
+    "save": "Save"
   },
   "orderStatus": {
     "PLACED": "New",
@@ -117,72 +124,202 @@
     },
     "noDriver": "Not given yet"
   },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Office",
+    "staff": "Delivery staff",
+    "customer": "Customer"
+  },
+  "signIn": {
+    "title": "Office sign-in",
+    "body": "Enter your mobile number. We will send a 6-digit code by SMS.",
+    "phone": "Mobile number",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeTitle": "Enter the code and your password",
+    "codeBody": "We sent a code to {{phone}}.",
+    "code": "6-digit code",
+    "password": "Password",
+    "passwordHint": "Signing in for the first time? Leave this empty and you will create a password next.",
+    "signIn": "Sign in",
+    "checking": "Checking…",
+    "resend": "Send a new code",
+    "resendIn": "New code in {{seconds}} s",
+    "changeNumber": "Change number",
+    "newPasswordTitle": "Create your password",
+    "newPasswordBody": "You will need it with an SMS code each time you sign in to the office portal.",
+    "newPassword": "New password",
+    "newPasswordHint": "At least 10 characters. A short sentence is easy to remember.",
+    "confirmPassword": "Type it again",
+    "mismatch": "The two passwords are different.",
+    "createPassword": "Create password and sign in"
+  },
   "customers": {
     "searchLabel": "Search customers",
-    "searchPlaceholder": "Name, area or last 4 digits of phone",
+    "searchPlaceholder": "Name, area, PIN code or last 4 digits",
     "count_one": "{{count}} customer",
     "count_other": "{{count}} customers",
     "empty": "No customer matches \"{{q}}\". Check the spelling or try the last 4 digits of their phone.",
+    "none": "No customers yet. They appear here when they sign up in the app or when you add one.",
     "cols": {
       "name": "Customer",
       "area": "Area",
-      "cans": "Cans with them",
-      "due": "Money due",
-      "lastOrder": "Last order"
+      "status": "Status",
+      "since": "Customer since"
     },
     "type": {
       "household": "Home",
       "office": "Office",
       "shop": "Shop"
     },
-    "noDue": "None",
-    "overDeposit_one": "{{count}} more than deposit paid",
-    "overDeposit_other": "{{count}} more than deposit paid"
+    "noName": "(no name yet)",
+    "noAddress": "No address yet",
+    "add": "+ Add customer",
+    "addTitle": "Add a customer who phoned",
+    "phone": "Mobile number",
+    "name": "Name",
+    "typeLabel": "Type",
+    "addressOptional": "Address (optional)",
+    "addressLabel": "Home",
+    "addressError": "Fill in the house, landmark and a 6-digit PIN code, or leave all three empty.",
+    "phoneError": "Enter a 10-digit mobile number starting with 6, 7, 8 or 9.",
+    "nameError": "Enter at least 2 letters.",
+    "save": "Save customer",
+    "openExisting": "Open that customer"
   },
   "customer": {
     "back": "← All customers",
     "notFound": "Customer not found",
-    "correct": "Correct can count",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on",
+    "switchedOff": "Customer switched off and signed out of the app.",
+    "switchedOn": "Customer switched on again.",
     "cards": {
-      "held": "Our cans with them",
-      "deposit": "Deposit paid",
-      "depositNote_one": "for {{count}} can",
-      "depositNote_other": "for {{count}} cans",
-      "due": "Money due"
+      "language": "Language",
+      "privacy": "Privacy notice accepted",
+      "privacyPending": "Not yet",
+      "privacyNote": "They accept it the first time they open the app.",
+      "since": "Customer since"
     },
+    "addresses": "Delivery addresses",
+    "addAddress": "+ Add address",
+    "noAddresses": "No address yet. Add one so orders can be delivered.",
+    "default": "Default",
+    "note": "Note",
+    "openMap": "Open saved location in Maps",
+    "noPin": "No map location saved",
     "ledger": {
       "title": "Can history",
-      "help": "Every can movement is kept. A mistake is fixed by adding a new entry, never by changing an old one.",
-      "empty": "No can movements yet. They will appear here after the first delivery.",
-      "cols": {
-        "date": "Date",
-        "what": "What happened",
-        "change": "Change",
-        "balance": "Cans after",
-        "by": "By"
-      },
-      "types": {
-        "opening": "Opening balance",
-        "delivery": "Full cans given",
-        "return": "Empty cans taken",
-        "reversal": "Reversal",
-        "correction": "Count corrected"
-      },
-      "reverses": "Cancels entry #{{id}}. {{note}}",
-      "today": "Today",
-      "youDemo": "You (demo)"
-    },
-    "correction": {
-      "title": "Correct can count",
-      "help": "Our records say {{count}} cans. Enter the number you counted. This adds a new entry; old entries stay.",
-      "count": "Cans they really have",
-      "countError": "Enter a whole number from 0 to 500.",
-      "reason": "Reason",
-      "reasonHint": "Required. For example: counted at the door with the customer.",
-      "reasonError": "Write a reason of at least 5 letters. The owner sees it in the audit log.",
-      "save": "Save correction",
-      "savedDemo": "Demo: correction added to the list below. Nothing was saved.",
-      "noChange": "The count is the same, so no entry was added."
+      "notYet": "Can deliveries and returns will be recorded here from Phase 5, when delivery is built."
     }
+  },
+  "address": {
+    "label": "Address name",
+    "line": "House name, number and street",
+    "landmark": "Landmark",
+    "pincode": "PIN code",
+    "note": "Note for the driver (optional)",
+    "save": "Save address",
+    "errors": {
+      "label": "Enter a name",
+      "line": "Enter the house and street",
+      "landmark": "Enter a landmark",
+      "pincode": "Enter a 6-digit PIN code",
+      "deliveryNote": "Use at most 200 characters"
+    }
+  },
+  "team": {
+    "staffIntro": "People who deliver. They sign in on their phone with an SMS code once, then a 4-digit PIN.",
+    "addStaff": "+ Add delivery staff",
+    "addAdmin": "+ Add office account",
+    "addStaffHelp": "They download the WtrDrop app and tap \"Delivery staff sign-in\" with this number.",
+    "addAdminHelp": "They sign in at this portal with this number and create their own password.",
+    "add": "Add",
+    "added": "{{name}} added.",
+    "noStaff": "No delivery staff yet.",
+    "noAdmins": "No office accounts yet.",
+    "cols": {
+      "name": "Name",
+      "status": "Status",
+      "pin": "PIN",
+      "password": "Password",
+      "actions": "Actions"
+    },
+    "pinSet": "Set on their phone",
+    "pinNotSet": "Not signed in yet",
+    "passwordSet": "Set",
+    "passwordNotSet": "Not yet",
+    "resetPin": "Reset PIN",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on",
+    "done": {
+      "off": "{{name}} switched off and signed out.",
+      "on": "{{name}} switched on.",
+      "reset": "{{name}}'s PIN was reset. They sign in with an SMS code next time."
+    },
+    "confirm": {
+      "off": {
+        "title": "Switch off {{name}}?",
+        "body": "{{name}} is signed out at once and cannot sign in until you switch them on again. Their history is kept.",
+        "yes": "Switch off"
+      },
+      "on": {
+        "title": "Switch on {{name}}?",
+        "body": "{{name}} will be able to sign in again.",
+        "yes": "Switch on"
+      },
+      "reset": {
+        "title": "Reset {{name}}'s PIN?",
+        "body": "Use this if they forgot the PIN or lost the phone. They are signed out and must sign in with an SMS code and choose a new PIN.",
+        "yes": "Reset PIN"
+      }
+    }
+  },
+  "settings": {
+    "areas": "Delivery areas",
+    "areasHelp": "Customers can only save an address whose PIN code is in an active area.",
+    "addArea": "+ Add area",
+    "editArea": "Change {{name}}",
+    "noAreas": "No delivery areas yet. Customers cannot sign up until you add one.",
+    "areaName": "Area name",
+    "areaNameMl": "Name in Malayalam (optional)",
+    "pincodes": "PIN codes",
+    "pincodesHint": "6-digit PIN codes separated by commas",
+    "badPins": "Not valid PIN codes: {{pins}}",
+    "needPin": "Add at least one PIN code.",
+    "areaActive": "Active (customers can choose it)",
+    "areaSaved": "{{name}} saved.",
+    "team": "Office accounts",
+    "teamHelp": "Only the owner can add or switch off office accounts.",
+    "password": "Your password",
+    "currentPassword": "Current password",
+    "changePassword": "Change password",
+    "passwordChanged": "Password changed. Other browsers were signed out."
+  },
+  "errors": {
+    "NETWORK": "Cannot reach the server. Check the connection and try again.",
+    "UNKNOWN": "Something went wrong. Please try again.",
+    "FORBIDDEN": "You do not have permission to do this.",
+    "OTP_INVALID_one": "The code is wrong or has expired. {{count}} try left.",
+    "OTP_INVALID_other": "The code is wrong or has expired. {{count}} tries left.",
+    "OTP_TOO_MANY_ATTEMPTS": "Too many wrong tries. Please ask for a new code.",
+    "OTP_RESEND_TOO_SOON": "Please wait {{seconds}} seconds before asking for a new code.",
+    "OTP_LIMIT": "Too many codes for this number. Please try again later.",
+    "OTP_SEND_FAILED": "The SMS could not be sent. Please try again in a minute.",
+    "ADMIN_SIGN_IN_FAILED_one": "The code or password is wrong. {{count}} try left.",
+    "ADMIN_SIGN_IN_FAILED_other": "The code or password is wrong. {{count}} tries left.",
+    "SETUP_EXPIRED": "This step has expired. Please start again.",
+    "PASSWORD_ALREADY_SET": "A password is already set. Please sign in with it.",
+    "PASSWORD_WRONG": "The current password is wrong.",
+    "VALIDATION_FAILED": "Some details are missing or incorrect.",
+    "CUSTOMER_EXISTS": "A customer with this number already exists.",
+    "ALREADY_IN_TEAM": "This number is already in the list. Switch it on instead.",
+    "OUTSIDE_SERVICE_AREA": "This PIN code is not in any active delivery area. Add it under Settings first.",
+    "PINCODE_IN_OTHER_AREA": "PIN code {{pincodes}} is already in {{area}}.",
+    "AREA_NAME_TAKEN": "An area with this name already exists.",
+    "CANNOT_CHANGE_SELF": "You cannot switch off your own account.",
+    "NOT_FOUND": "Not found. It may belong to another supplier or have been removed.",
+    "UNAUTHENTICATED": "Please sign in again.",
+    "RATE_LIMITED": "Too many requests. Please wait a minute."
   }
 }

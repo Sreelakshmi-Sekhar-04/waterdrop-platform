@@ -30,7 +30,6 @@ test('phone sign-in: Send code stays off until the number is a valid Indian mobi
   await input.fill('98470 12345');
   await expect(input).toHaveValue('9847012345');
   await expect(send).toBeEnabled();
-  await expect(page.getByText(/Sign-in is connected in Phase 3/)).toBeVisible();
 });
 
 test('order: stepper changes the total, adds deposit for new cans, and stops at the maximum', async ({

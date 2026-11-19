@@ -22,4 +22,6 @@ export const errors = {
   validation: (details: unknown) =>
     new AppError(400, 'VALIDATION_FAILED', 'Some details are missing or incorrect.', details),
   conflict: (code: string, message: string) => new AppError(409, code, message),
+  tooMany: (code: string, message: string, details?: unknown) =>
+    new AppError(429, code, message, details),
 };

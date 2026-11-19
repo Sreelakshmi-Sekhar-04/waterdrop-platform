@@ -1,5 +1,5 @@
 /**
- * Seeds one DEMO supplier with DEMO settings. Safe to run more than once.
+ * Seeds one DEMO supplier with DEMO settings and DEMO service areas. Safe to run more than once.
  * Optionally creates the first owner account from SEED_OWNER_PHONE.
  * No passwords, OTPs or secrets are created here.
  */
@@ -8,7 +8,7 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { indianMobileSchema } from '@wtrdrop/shared';
 import { createDb, type Database } from './client';
-import { settings, suppliers, userRoles, users } from './schema';
+import { serviceAreas, settings, suppliers, userRoles, users } from './schema';
 import { DEMO_SETTINGS } from '../modules/settings/settings.schema';
 
 export const DEMO_SUPPLIER_SLUG = 'demo';
@@ -37,6 +37,31 @@ export async function seed(db: Database, ownerPhone?: string): Promise<{ supplie
             value,
           })),
       )
+      .onConflictDoNothing();
+
+    // DEMO areas around Kochi so sign-up works in development. Replace with the real list.
+    await tx
+      .insert(serviceAreas)
+      .values([
+        {
+          supplierId: supplier.id,
+          name: 'Kakkanad (demo)',
+          nameMl: 'കാക്കനാട് (ഡെമോ)',
+          pincodes: ['682030', '682021', '682037'],
+        },
+        {
+          supplierId: supplier.id,
+          name: 'Edappally (demo)',
+          nameMl: 'ഇടപ്പള്ളി (ഡെമോ)',
+          pincodes: ['682024'],
+        },
+        {
+          supplierId: supplier.id,
+          name: 'Infopark (demo)',
+          nameMl: 'ഇൻഫോപാർക്ക് (ഡെമോ)',
+          pincodes: ['682042'],
+        },
+      ])
       .onConflictDoNothing();
 
     if (ownerPhone) {

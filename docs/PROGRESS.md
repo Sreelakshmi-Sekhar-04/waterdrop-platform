@@ -6,11 +6,11 @@ Read this file first at the start of every Claude Code session. Update it at the
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 2: Design system and static screens** (complete, waiting for review) |
-| Phase status | Phase 1 approved 19 Nov 2026 ("go with phase 2"). Phase 2 delivered 19 Nov on branch `phase-2-ui` (built on `phase-1-foundation`). **Waiting for Sreelakshmi's review** before Phase 3. |
-| Next step | Review the Phase 2 screens and report below, then Phase 3 (real sign-in with OTP, customer and staff accounts). |
-| Coding started? | Yes. Do not start Phase 3 until Phase 2 is reviewed. |
-| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-2-ui`. |
+| Current phase | **Phase 3: Sign-in, users and addresses** (complete, waiting for review) |
+| Phase status | Phase 2 approved 19 Nov 2026 ("go-ahead for Phase 3"). Phase 3 delivered 19 Nov on branch `phase-3-auth` (built on `phase-2-ui`). **Waiting for Sreelakshmi's review** before Phase 4. |
+| Next step | Review the Phase 3 report below, then Phase 4 (ordering: customer orders, admin orders, slots). |
+| Coding started? | Yes. Do not start Phase 4 until Phase 3 is reviewed. |
+| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-3-auth`. |
 | Docs location | Repo `docs/` is the source of truth from Phase 1. Project files `wtrdrop/docs/` hold a copy. |
 
 ## Key references
@@ -25,6 +25,7 @@ Read this file first at the start of every Claude Code session. Update it at the
 2. **Brand assets**: none existed. Claude designed the logo (recommended: "delivery drop", alternatives B and C) and UI direction on the design canvas https://claude.ai/artifact/F5STv5tFum7Ny6mumTamoh. Palette: Drop Blue #1769E0, Deep Navy #0B2545, Mist #E6F1FC, Cloud #F4F8FC, Done Green #13795B, Attention Amber #B54708. Type: Nunito + Noto Sans Malayalam. Status: approved with the go-ahead for Phase 1 (19 Nov).
 3. **Business facts**: working placeholder values are in `REQUIREMENTS-CHANGELOG.md` Part 4 (demo data, all configurable). Real values needed before launch.
 4. **Lead-time items to start early**: SMS DLT registration (2 to 4 weeks), Apple/Google developer accounts in the business's name.
+5. **Real SMS (from Phase 3)**: an MSG91 account in the business's name, a DLT-approved OTP template, and `MSG91_AUTH_KEY` / `MSG91_TEMPLATE_ID` set on the server. Until then only the development outbox works.
 
 ---
 
@@ -146,3 +147,62 @@ Defects found by the new tests and fixed: (a) pasting "98470 12345" into the pho
 **11. Deviations from the original requirements** — none.
 
 **12. Recommended next step** — Phase 3: real phone sign-in with OTP (MSG91 recommended, D-17), customer self-registration, staff and admin accounts created by the owner, and the first native app tests.
+
+---
+
+### Phase 3: Sign-in, users and addresses (19 Nov 2026)
+
+**1. What was completed**
+- Real sign-in for all three apps, with no fake or test login anywhere (details in `docs/adr/0002-sign-in-and-sessions.md`):
+  - Customers: SMS code, then name, language and the privacy notice (DPDP), then the first delivery address. Stays signed in for 90 days of use.
+  - Delivery staff: SMS code once on a phone, then a 4-digit PIN every day. Common PINs are refused before the person types it twice. 5 wrong PINs need a new SMS code.
+  - Office (admin, owner): SMS code plus a password, which is created at the first sign-in.
+- Sessions: 15-minute access tokens, rotating refresh tokens with theft detection, sign-out, and immediate sign-out when the office switches someone off.
+- Customer profile and addresses (up to 10, one default, archived on removal, optional GPS location from the phone). An address is accepted only inside an active delivery area, and the PIN code field says so.
+- Admin portal is now real for: sign-in, Customers (search by name, area, PIN code or last 4 digits; add a customer who phoned, with a duplicate-number warning; customer detail; addresses; switch off and on), Delivery staff (add, switch off and on, reset PIN), Settings (delivery areas, office accounts for the owner only, change password). Nothing is shown before sign-in.
+- Mobile: phone, code, set-PIN, PIN, profile setup, address and Account screens are real. Later-phase screens (orders, route) still show demo data with a banner saying so.
+- SMS providers: a development outbox (codes go to a local file, refused in production) and an MSG91 adapter for production (not yet tried against MSG91, see limitations).
+- Browser tests now run against the real API and a fresh throwaway database (`apps/api/src/e2e-server.ts`), and CI gives both browser jobs a PostgreSQL service.
+
+**2. Files created or changed**
+- API: `src/db/schema.ts`, migration `0002_phase3_users_addresses.sql`, `src/modules/{auth,customers,people,service-areas}/**`, `src/providers/otp/**`, `src/lib/credentials.ts`, `src/lib/tokens.ts`, `src/middleware/auth.ts`, `src/config/env.ts`, `src/db/seed.ts` (DEMO areas), `src/e2e-server.ts`, `test/{auth,people}.test.ts`, `.env.example`.
+- Shared: `packages/shared/src/people.ts` (+ tests).
+- Mobile: `src/lib/{api,session,storage,errors,customer}.ts(x)`, `src/components/PinPad.tsx`, `src/app/(auth)/{phone,otp,set-pin,pin}.tsx`, `src/app/(customer)/{profile-setup,address,account,home}.tsx`, `RoleGate`, `CustomerNav`, locales, `app.json` (location permission text), `e2e/sign-in.spec.ts`.
+- Admin: `src/lib/{api,auth,errors}.ts(x)`, `src/pages/{SignIn,Customers,CustomerDetail,Staff,Settings}Page.tsx`, `src/components/{TeamTable,Layout}.tsx`, locales, `vite.config.ts` (API proxy), `e2e/{signed-out,portal,support}.ts`. The Phase 2 demo customers and can-history demo were removed.
+- Docs: `docs/adr/0002-sign-in-and-sessions.md`, README (API table, dev SMS outbox, browser tests), this report, change log. CI workflow.
+
+**3. Architecture and design decisions** — see ADR 0002. In short: an SMS code is the one way in; staff add a PIN per phone and the office adds a password (D-02); refresh tokens are hashed and rotated; the server checks the session on every request; the office portal calls the API on its own address so its sign-in cookie is first-party. Browser tests sign in for real by reading the development SMS outbox, so no test-only login code exists.
+
+**4. APIs and database changes**
+- 33 new endpoints (README table): sign-in (8), customer profile and addresses (7), delivery areas (4), office management of customers and their addresses (7), staff (4) and office accounts (3).
+- Database: 4 new tables (`customers`, `addresses`, `service_areas`, `staff_devices`), 1 new enum, new columns `users.password_hash`, `sessions.device_id`, `user_roles.status`, partial unique indexes for "one default address" and "one active PIN per phone".
+
+**5. Tests executed** (all run on 19 Nov 2026 in the development container, PostgreSQL 16)
+- `pnpm lint`, `pnpm typecheck` (all packages), `prettier`, `pnpm check:i18n` (admin 248 texts, mobile 215)
+- `pnpm test`: design tokens 12, shared 31 (5 new), API 78 in 6 files against a real database per file (auth 27, people and addresses 17, OTP providers 5, plus the Phase 1 suites)
+- Admin Playwright: 15 scenarios × desktop and phone = 30, against the real API: signed-out view, first sign-in with password creation, reload keeps the session, add a delivery area (PIN code already in another area refused), add a customer who phoned, duplicate number, search, address outside the area refused, switch off and on, add and switch off staff, owner-only office accounts, change password then sign in with the new one (old one refused), Malayalam, axe WCAG 2 A/AA on every page
+- Mobile Playwright: 20 tests at Pixel 7 size against the real API, including full customer sign-up to home and account, wrong code, staff SMS code → weak PIN refused → PIN → sign out → wrong PIN → PIN sign-in, and a non-staff number refused
+- `expo export --platform android` bundle build
+
+**6. Actual test results** — all passed: 121 unit/integration tests, 30 admin browser tests, 20 mobile browser tests, translation check, Android bundle (3.8 MB).
+
+Defects found and fixed during Phase 3: (a) reusing an old refresh token did not end the session family, because the revoke was rolled back with the error; it now commits first (test added). (b) The "we do not deliver here" message appeared off-screen; it now shows on the PIN code field. (c) A weak PIN was refused only after typing it twice; now at once. (d) The PIN dots had a spoken label the browser could not announce (accessibility check); fixed. (e) Secondary buttons on hover had text slightly below the contrast minimum (4.43:1, from Phase 2); fixed.
+
+**7. Known defects and limitations**
+- **Real SMS is not connected.** The MSG91 adapter follows MSG91's Flow API documentation but has never been run against MSG91. It needs the business's MSG91 account and a DLT-approved template.
+- Native app tests (Maestro on Android) could not run here: the development container has no Android emulator. The app was tested in a phone-sized browser and the Android bundle builds. Planned to run on a device before release.
+- Addresses have no map picker; only an optional "Save my current location" GPS capture.
+- Customers sign in with an SMS code each time their 90-day session ends; there is no customer PIN (as approved).
+- Malayalam texts are still draft translations and need a native speaker's review.
+- Orders, deliveries, payments and the Today numbers are still demo data (Phases 4 to 7).
+- The branch has not been pushed and CI has not run on GitHub (GitHub App still missing, see blockers).
+
+**8. Security considerations** — no codes, PINs, passwords or refresh tokens are stored in readable form; phone numbers are masked in logs; the code request does not reveal whether an account exists; limits on codes per number and per IP; PIN and password attempts are limited; office cookie is httpOnly, SameSite=Strict and path-limited; all office changes audited; the dev outbox is refused in production; every query is limited to the signed-in supplier (another supplier's records return "not found"). The repository is public, so the MSG91 key must only ever be set on the server.
+
+**9. Pending decisions** — none blocking. Needed before launch: the business's MSG91 account and DLT template (D-17), and the real delivery areas and PIN codes (replace the 3 DEMO areas).
+
+**10. Recommendations** — start DLT registration now if not started, since real SMS depends on it. Have someone try sign-up on a real Android phone with Expo Go once the code is pushed. Send me the real list of delivery areas and PIN codes.
+
+**11. Deviations from the original requirements** — none. Office sign-in uses SMS code plus password, and staff use SMS once plus a PIN, as approved in D-02.
+
+**12. Recommended next step** — Phase 4: ordering. Customers place and repeat orders in two taps, the office creates orders for phone-in customers, delivery slots and the cut-off time, and order status from placed to assigned.

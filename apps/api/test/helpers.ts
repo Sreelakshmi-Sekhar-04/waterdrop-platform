@@ -12,7 +12,8 @@ import { createApp } from '../src/app';
 import { loadEnv } from '../src/config/env';
 import { createDb, type DbHandle } from '../src/db/client';
 import { runMigrations } from '../src/db/migrate';
-import { suppliers, userRoles, users } from '../src/db/schema';
+import { sessions, suppliers, userRoles, users } from '../src/db/schema';
+import type { OtpProvider } from '../src/providers/otp';
 import { createLogger } from '../src/lib/logger';
 import { TokenService } from '../src/lib/tokens';
 
@@ -33,6 +34,11 @@ export interface TestHarness {
   supplierA: string;
   supplierB: string;
   makeUser: (supplierId: string, role: Role) => Promise<TestUser>;
+  /** SMS codes "sent" during the test, newest last. Delivery is the only part replaced. */
+  sms: { phone: string; code: string; language: string }[];
+  lastCode: (phone: string) => string;
+  /** When set, the next send fails like a provider outage. */
+  failNextSend: { value: boolean };
   cleanup: () => Promise<void>;
 }
 
@@ -56,10 +62,31 @@ export async function createHarness(
     JWT_SECRET: TEST_JWT_SECRET,
     CORS_ORIGINS: 'http://localhost:5173',
     LOG_LEVEL: 'silent',
+    DEFAULT_SUPPLIER_SLUG: 'a',
+    // Every test request comes from 127.0.0.1; the per-network limit has its own test.
+    OTP_PER_IP_PER_HOUR: '100000',
     ...envOverrides,
   });
   const handle = createDb(databaseUrl);
-  const app = createApp({ env, db: handle.db, logger: createLogger('silent') });
+  const sms: TestHarness['sms'] = [];
+  const failNextSend = { value: false };
+  const otpProvider: OtpProvider = {
+    name: 'test-capture',
+    send: async (m) => {
+      if (failNextSend.value) {
+        failNextSend.value = false;
+        const { OtpDeliveryError } = await import('../src/providers/otp');
+        throw new OtpDeliveryError('test outage');
+      }
+      sms.push(m);
+    },
+  };
+  const app = createApp({ env, db: handle.db, logger: createLogger('silent'), otpProvider });
+  const lastCode = (phone: string) => {
+    const m = [...sms].reverse().find((x) => x.phone === phone);
+    if (!m) throw new Error(`no SMS sent to ${phone}`);
+    return m.code;
+  };
   const tokens = new TokenService(TEST_JWT_SECRET);
 
   const [a] = await handle.db
@@ -80,11 +107,23 @@ export async function createHarness(
       .values({ phone, name: `${role} ${phoneSeq}` })
       .returning({ id: users.id });
     await handle.db.insert(userRoles).values({ userId: u!.id, supplierId, role });
+    // A real session row: access tokens only work while their session is open.
+    const [s] = await handle.db
+      .insert(sessions)
+      .values({
+        userId: u!.id,
+        supplierId,
+        role,
+        familyId: randomUUID(),
+        refreshTokenHash: randomBytes(32).toString('hex'),
+        expiresAt: new Date(Date.now() + 3600_000),
+      })
+      .returning({ id: sessions.id });
     const token = await tokens.issueAccessToken({
       userId: u!.id,
       supplierId,
       role,
-      sessionId: randomUUID(),
+      sessionId: s!.id,
     });
     return { userId: u!.id, supplierId, role, token };
   };
@@ -97,7 +136,18 @@ export async function createHarness(
     await c.end();
   };
 
-  return { app, handle, tokens, supplierA: a!.id, supplierB: b!.id, makeUser, cleanup };
+  return {
+    app,
+    handle,
+    tokens,
+    supplierA: a!.id,
+    supplierB: b!.id,
+    makeUser,
+    sms,
+    lastCode,
+    failNextSend,
+    cleanup,
+  };
 }
 
 export const bearer = (u: TestUser) => ({ Authorization: `Bearer ${u.token}` });
