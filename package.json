@@ -1,0 +1,34 @@
+{
+  "name": "wtrdrop",
+  "private": true,
+  "description": "WtrDrop: water-can delivery management platform",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm -r --if-present build",
+    "format": "prettier --write .",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "pnpm --filter @wtrdrop/api db:migrate",
+    "db:seed": "pnpm --filter @wtrdrop/api db:seed",
+    "dev:api": "pnpm --filter @wtrdrop/api dev",
+    "dev:admin": "pnpm --filter @wtrdrop/admin dev",
+    "dev:mobile": "pnpm --filter @wtrdrop/mobile start",
+    "test:e2e": "pnpm --filter @wtrdrop/admin build && pnpm --filter @wtrdrop/admin test:e2e",
+    "check:mobile": "pnpm --filter @wtrdrop/mobile export:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.1"
+  },
+  "type": "module"
+}

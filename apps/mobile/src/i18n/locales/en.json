@@ -1,0 +1,21 @@
+{
+  "welcome": {
+    "tagline": "Pure Water. Delivered with Care.",
+    "chooseLanguage": "Choose your language",
+    "continue": "Continue with phone number",
+    "signInLater": "Sign-in arrives in Phase 3 of development.",
+    "devPreview": "Preview screens (development only)"
+  },
+  "customer": {
+    "homeTitle": "Need water today?",
+    "homeEmpty": "Your usual order, cans with you and amount due will appear here. Ordering is built in Phase 4."
+  },
+  "staff": {
+    "routeTitle": "Today's route",
+    "routeEmpty": "Your stops for today will appear here, with the next stop at the top. Deliveries are built in Phase 5."
+  },
+  "common": {
+    "back": "Back",
+    "previewBanner": "Development preview: no real data"
+  }
+}

@@ -1,0 +1,191 @@
+/* Colours, spacing and sizes come from @wtrdrop/design-tokens via CSS variables (lib/theme.ts). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  font-family: Nunito, 'Noto Sans Malayalam', system-ui, sans-serif;
+  font-size: var(--font-body);
+  line-height: 1.5;
+  color: var(--color-ink);
+  background: var(--color-background);
+}
+h1 {
+  font-size: var(--font-heading);
+  font-weight: 900;
+  margin: 0 0 var(--space-xxl);
+}
+h2 {
+  font-size: var(--font-title);
+  font-weight: 900;
+  margin: 0 0 var(--space-md);
+}
+a {
+  color: var(--color-primary);
+}
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+.skip-link:focus {
+  left: var(--space-lg);
+  top: var(--space-lg);
+  background: var(--color-surface);
+  padding: var(--space-sm);
+  z-index: 10;
+}
+
+.shell {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+.sidebar {
+  flex: 1 1 240px;
+  max-width: 260px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-xxl) var(--space-lg);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-sm) var(--space-xl);
+}
+.wordmark {
+  font-size: 21px;
+  font-weight: 900;
+}
+.sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.sidebar a {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+.sidebar a:hover {
+  background: var(--color-background);
+}
+.sidebar a.active {
+  background: var(--color-mist);
+  color: var(--color-primary-pressed);
+  font-weight: 800;
+}
+
+.content {
+  flex: 999 1 560px;
+  min-width: 0;
+  padding: var(--space-xxl) var(--space-xxxl);
+  max-width: 1180px;
+}
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.notice {
+  margin: 0 0 var(--space-xxl);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  font-weight: 700;
+}
+main:focus {
+  outline: none;
+}
+
+.page section {
+  margin-bottom: var(--space-xxl);
+}
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-card);
+}
+.card.empty {
+  color: var(--color-ink-muted);
+}
+
+.btn {
+  min-height: var(--touch-min);
+  padding: 0 var(--space-xl);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.btn-secondary {
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+.status .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+}
+.status-ok {
+  color: var(--color-success);
+}
+.status-ok .dot {
+  background: var(--color-success);
+}
+.status-offline,
+.status-degraded {
+  color: var(--color-warning);
+}
+.status-offline .dot,
+.status-degraded .dot {
+  background: var(--color-warning);
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    max-width: none;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .sidebar ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .content {
+    padding: var(--space-lg);
+  }
+}

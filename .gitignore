@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+coverage/
+.expo/
+web-build/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+playwright-report/
+test-results/
+.turbo/
+*.tsbuildinfo
+apps/mobile/dist-check/
+apps/mobile/expo-env.d.ts

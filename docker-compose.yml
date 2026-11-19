@@ -1,0 +1,14 @@
+# Local development database only. Never use these credentials outside your machine.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: wtrdrop
+      POSTGRES_PASSWORD: wtrdrop_local
+      POSTGRES_DB: wtrdrop
+    ports:
+      - '5432:5432'
+    volumes:
+      - wtrdrop-db:/var/lib/postgresql/data
+volumes:
+  wtrdrop-db:

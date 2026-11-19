@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "today": "Today",
+    "orders": "Orders",
+    "deliveries": "Deliveries",
+    "customers": "Customers",
+    "stock": "Cans and stock",
+    "payments": "Payments",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "app": {
+    "skipToContent": "Skip to main content",
+    "language": "മലയാളം",
+    "languageLabel": "Switch language to Malayalam",
+    "foundationNotice": "Foundation build: sign-in arrives in Phase 3. No business data is shown yet."
+  },
+  "today": {
+    "title": "Good morning",
+    "attention": "Needs your attention",
+    "attentionEmpty": "Nothing needs you right now. New orders, failed deliveries and cash differences will appear here.",
+    "soFar": "Today so far",
+    "soFarEmpty": "Today's orders, deliveries and collections will appear here once ordering is built (Phase 4)."
+  },
+  "status": {
+    "checking": "Checking server…",
+    "ok": "Server connected",
+    "degraded": "Server is running but the database is unavailable",
+    "offline": "Cannot reach the server"
+  },
+  "placeholder": {
+    "title": "{{section}}",
+    "body": "This section is built in {{phase}}."
+  }
+}
