@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-test('shows the Today page with honest empty states', async ({ page }) => {
+test('shows the Today page and says plainly that the numbers are demo data', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Good morning');
   await expect(page.getByRole('heading', { name: 'Needs your attention' })).toBeVisible();
-  await expect(page.getByRole('note')).toContainText('sign-in arrives in Phase 3');
+  await expect(page.getByRole('note')).toContainText('made-up demo data and nothing is saved');
+  await expect(page.getByText('Demo data', { exact: true })).toBeVisible();
 });
 
 // No API runs during these tests, so the portal must say so plainly instead of failing silently.
@@ -15,10 +16,10 @@ test('says clearly when the server cannot be reached', async ({ page }) => {
 
 test('navigates between sections', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Orders' }).click();
-  await expect(page).toHaveURL(/\/orders$/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Orders');
-  await expect(page.getByText('This section is built in Phase 4.')).toBeVisible();
+  await page.getByRole('link', { name: 'Payments' }).click();
+  await expect(page).toHaveURL(/\/payments$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Payments');
+  await expect(page.getByText('This section is built in Phase 6.')).toBeVisible();
 });
 
 test('switches to Malayalam and remembers it', async ({ page }) => {
@@ -27,7 +28,7 @@ test('switches to Malayalam and remembers it', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('സുപ്രഭാതം');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ml');
   await page.reload();
-  await expect(page.getByRole('link', { name: 'ഓർഡറുകൾ' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'ഓർഡറുകൾ', exact: true })).toBeVisible();
 });
 
 test('has no horizontal scroll at phone width', async ({ page }) => {

@@ -35,6 +35,7 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm check:i18n
       - run: pnpm typecheck
       - run: pnpm test
 
@@ -49,6 +50,19 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @wtrdrop/admin exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+
+  mobile-e2e:
+    name: Mobile screens in a phone-sized browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @wtrdrop/mobile exec playwright install --with-deps chromium
+      - run: pnpm test:e2e:mobile
+        env: { CI: '1' }
 
   mobile-bundle:
     name: Mobile app bundles for Android

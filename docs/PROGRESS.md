@@ -6,11 +6,11 @@ Read this file first at the start of every Claude Code session. Update it at the
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 1: Project foundation** (complete, waiting for review) |
-| Phase status | Phase 0 approved 19 Nov 2026 ("start Phase 1"), including the recommended logo and UI direction. Phase 1 delivered 19 Nov on branch `phase-1-foundation`. **Waiting for Sreelakshmi's review** before Phase 2. |
-| Next step | Review the Phase 1 report below, then Phase 2 (design system components and static screens for review). |
-| Coding started? | Yes, Phase 1. Do not start Phase 2 until Phase 1 is reviewed. |
-| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-1-foundation`. |
+| Current phase | **Phase 2: Design system and static screens** (complete, waiting for review) |
+| Phase status | Phase 1 approved 19 Nov 2026 ("go with phase 2"). Phase 2 delivered 19 Nov on branch `phase-2-ui` (built on `phase-1-foundation`). **Waiting for Sreelakshmi's review** before Phase 3. |
+| Next step | Review the Phase 2 screens and report below, then Phase 3 (real sign-in with OTP, customer and staff accounts). |
+| Coding started? | Yes. Do not start Phase 3 until Phase 2 is reviewed. |
+| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-2-ui`. |
 | Docs location | Repo `docs/` is the source of truth from Phase 1. Project files `wtrdrop/docs/` hold a copy. |
 
 ## Key references
@@ -101,3 +101,48 @@ Defects found and fixed during Phase 1: (a) clearing an optional setting (`suppo
 **11. Deviations from the original requirements** — none beyond the approved change log. The original Phase 1 included "database" broadly; only platform tables were created now, per approved C-14 (vertical slices).
 
 **12. Recommended next step** — Phase 2: build the reusable UI components (buttons, steppers, cards, status chips, inputs, empty/error/loading states) and the static key screens for both apps from the approved design, for your review.
+
+---
+
+### Phase 2: Design system and static screens (19 Nov 2026)
+
+**1. What was completed**
+- Mobile components from the approved design: Button (primary, secondary, warning), Stepper (big − / +), Card, StatusChip (always word plus icon), ChoiceList (radio cards), TextField, Message, Header with 48 px back button, bottom navigation, loading skeleton, empty and error states (including offline).
+- Customer screens: Home (2-tap reorder), Order (one screen, pre-filled), Order placed, My orders (Order again), Help (call, WhatsApp, common problems). Sign-in layout: phone number and 6-digit code screens (layout only; no code is sent).
+- Staff screens: Today's route, Delivered (one screen: full cans, empties, payment, live can balance using the real ledger rule), Couldn't deliver (one tap reason; note required only for "Something else").
+- Admin portal pages: Today (attention cards that link to the work, today's numbers, drivers table), Orders (filters, select orders waiting for a driver, simulated assign), Customers (search by name, area or last 4 phone digits), Customer detail (cans, deposit, dues, append-only can history with a reversal, correction dialog that requires a reason).
+- Every screen is in English and Malayalam. Every page with made-up numbers shows a "Demo data" badge, and every simulated action says "Nothing was saved".
+
+**2. Files created or changed** — `apps/mobile/src/components/*` (13 new), `apps/mobile/src/app/(auth|customer|staff)/*`, `apps/mobile/src/demo/fixtures.ts`, `apps/mobile/e2e/screens.spec.ts`, `apps/mobile/playwright.config.ts`; `apps/admin/src/components/{ui,Dialog}.tsx`, `apps/admin/src/pages/{Today,Orders,Customers,CustomerDetail}Page.tsx`, `apps/admin/src/demo/fixtures.ts`, `apps/admin/e2e/pages.spec.ts`; `packages/shared/src/schemas.ts` (phone input cleaning); `scripts/check-i18n.mjs`; CI workflow.
+
+**3. Architecture and design decisions** — Demo data lives only in `demo/fixtures.ts` files, so Phases 3 to 7 replace them with API calls in one place. On the web the Stepper is a labelled group of two buttons; on Android/iOS it is one swipe-adjustable control for screen readers. Admin tables scroll inside their box at phone width so the page never scrolls sideways.
+
+**4. APIs and database changes** — none. Phase 2 is screens only.
+
+**5. Tests executed** (all run on 19 Nov 2026 in the development container)
+- `pnpm lint`, `pnpm typecheck` (all packages), `prettier --check`, `pnpm check:i18n` (new: English and Malayalam have the same texts and the same placeholders; checked that it fails on a missing text and on a wrong placeholder)
+- `pnpm test`: design tokens 12, shared 26 (6 new phone input cases), API 29 against PostgreSQL 16
+- Admin Playwright: 18 scenarios × desktop and phone = 36, including axe WCAG 2 A/AA checks on all 4 built pages
+- Mobile Playwright (new): 16 tests at Pixel 7 size on the Expo web build, including axe checks on 10 screens
+- `expo export --platform android` bundle build
+
+**6. Actual test results** — all passed: 67 unit/integration tests, 36 admin browser tests, 16 mobile browser tests, translation check, Android bundle.
+
+Defects found by the new tests and fixed: (a) pasting "98470 12345" into the phone field cut the last digit, because the field's 10-character limit counted the space. The field now cleans spaces, dashes and +91/0 before limiting (shared `normaliseMobileInput`, with tests). (b) Light blue text on the blue home card was slightly below the contrast minimum (4.43:1); now white. (c) Radio choices did not report "selected" to the browser; fixed. (d) The route progress bar had no spoken name; fixed. (e) The "Couldn't deliver" note was labelled "optional" even when it was required; the label now says when it is needed.
+
+**7. Known defects and limitations**
+- All data is demo data; buttons that would save something only change the screen and say so. Real sign-in arrives in Phase 3, ordering in Phase 4.
+- Mobile tests run in a browser, not on a real phone. Native checks (Maestro on Android) start in Phase 3.
+- Malayalam texts are still draft translations and need a native speaker's review.
+- Deliveries, Cans and stock, Payments, Reports and Settings in the admin portal are still placeholders for their phases.
+- The branch has not been pushed and CI has not run on GitHub (GitHub App still missing, see blockers).
+
+**8. Security considerations** — no new data paths. Phone numbers in admin lists show only the last 4 digits. No credentials or real data added.
+
+**9. Pending decisions** — none new. Please review the screens (screenshots in project files `wtrdrop/phase-2/`).
+
+**10. Recommendations** — have a Malayalam speaker read the screens now, before more text is added. Start SMS DLT registration if not started; Phase 3 needs it.
+
+**11. Deviations from the original requirements** — none.
+
+**12. Recommended next step** — Phase 3: real phone sign-in with OTP (MSG91 recommended, D-17), customer self-registration, staff and admin accounts created by the owner, and the first native app tests.

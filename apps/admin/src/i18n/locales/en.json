@@ -13,14 +13,48 @@
     "skipToContent": "Skip to main content",
     "language": "മലയാളം",
     "languageLabel": "Switch language to Malayalam",
-    "foundationNotice": "Foundation build: sign-in arrives in Phase 3. No business data is shown yet."
+    "foundationNotice": "Design preview: pages show made-up demo data and nothing is saved. Sign-in arrives in Phase 3."
   },
   "today": {
     "title": "Good morning",
     "attention": "Needs your attention",
-    "attentionEmpty": "Nothing needs you right now. New orders, failed deliveries and cash differences will appear here.",
     "soFar": "Today so far",
-    "soFarEmpty": "Today's orders, deliveries and collections will appear here once ordering is built (Phase 4)."
+    "drivers": "Drivers right now",
+    "searchLabel": "Search customers",
+    "searchPlaceholder": "Customer phone or name",
+    "newOrder": "+ New order",
+    "newOrderDemo": "Taking an order for a phone caller is built in Phase 4. Nothing was created.",
+    "items": {
+      "unassigned": "orders for today not given to a driver yet",
+      "failed": "deliveries failed: customer not home",
+      "cashShort": "short in Ravi's cash handover yesterday",
+      "complaint": "complaint: \"can count is wrong\""
+    },
+    "actions": {
+      "assign": "Assign by area",
+      "reschedule": "Reschedule",
+      "review": "Review",
+      "open": "Open"
+    },
+    "stats": {
+      "orders": "Orders",
+      "delivered": "Delivered",
+      "collected": "Collected",
+      "due": "Money due",
+      "cansOut": "Our cans with customers",
+      "fullAtPlant": "Full cans at plant",
+      "breakdown": "Cash {{cash}} · UPI {{upi}}"
+    },
+    "driverCols": {
+      "driver": "Driver",
+      "area": "Area",
+      "stops": "Stops",
+      "cash": "Cash collected",
+      "status": "Status"
+    },
+    "stopsOf": "{{done}} of {{total}}",
+    "onRoute": "On route",
+    "dayClosed": "Day closed"
   },
   "status": {
     "checking": "Checking server…",
@@ -31,5 +65,124 @@
   "placeholder": {
     "title": "{{section}}",
     "body": "This section is built in {{phase}}."
+  },
+  "demo": {
+    "badge": "Demo data",
+    "badgeHelp": "Made-up numbers for review. Real data arrives in later phases."
+  },
+  "common": {
+    "clear": "Clear selection",
+    "cancel": "Cancel"
+  },
+  "orderStatus": {
+    "PLACED": "New",
+    "ACCEPTED": "Accepted",
+    "ASSIGNED": "Given to driver",
+    "OUT_FOR_DELIVERY": "On the way",
+    "DELIVERED": "Delivered",
+    "RESCHEDULE_PENDING": "Needs a new time",
+    "CANCELLED": "Cancelled",
+    "REJECTED": "Rejected"
+  },
+  "orders": {
+    "filterLabel": "Show orders",
+    "filters": {
+      "all": "All",
+      "needsDriver": "Needs a driver",
+      "onTheWay": "On the way",
+      "problems": "Problems",
+      "done": "Done"
+    },
+    "bulkLabel": "Selected orders",
+    "selected_one": "{{count}} order selected",
+    "selected_other": "{{count}} orders selected",
+    "driverLabel": "Give to",
+    "assign": "Assign",
+    "assignedDemo_one": "Demo: {{count}} order given to {{driver}}. Nothing was saved.",
+    "assignedDemo_other": "Demo: {{count}} orders given to {{driver}}. Nothing was saved.",
+    "empty": "No orders here right now.",
+    "selectAll": "Select all orders waiting for a driver",
+    "selectOne": "Select order {{id}} for {{name}}",
+    "cols": {
+      "order": "Order",
+      "customer": "Customer",
+      "cans": "Cans",
+      "slot": "Time slot",
+      "status": "Status",
+      "driver": "Driver"
+    },
+    "channel": {
+      "app": "From app",
+      "phone": "By phone"
+    },
+    "noDriver": "Not given yet"
+  },
+  "customers": {
+    "searchLabel": "Search customers",
+    "searchPlaceholder": "Name, area or last 4 digits of phone",
+    "count_one": "{{count}} customer",
+    "count_other": "{{count}} customers",
+    "empty": "No customer matches \"{{q}}\". Check the spelling or try the last 4 digits of their phone.",
+    "cols": {
+      "name": "Customer",
+      "area": "Area",
+      "cans": "Cans with them",
+      "due": "Money due",
+      "lastOrder": "Last order"
+    },
+    "type": {
+      "household": "Home",
+      "office": "Office",
+      "shop": "Shop"
+    },
+    "noDue": "None",
+    "overDeposit_one": "{{count}} more than deposit paid",
+    "overDeposit_other": "{{count}} more than deposit paid"
+  },
+  "customer": {
+    "back": "← All customers",
+    "notFound": "Customer not found",
+    "correct": "Correct can count",
+    "cards": {
+      "held": "Our cans with them",
+      "deposit": "Deposit paid",
+      "depositNote_one": "for {{count}} can",
+      "depositNote_other": "for {{count}} cans",
+      "due": "Money due"
+    },
+    "ledger": {
+      "title": "Can history",
+      "help": "Every can movement is kept. A mistake is fixed by adding a new entry, never by changing an old one.",
+      "empty": "No can movements yet. They will appear here after the first delivery.",
+      "cols": {
+        "date": "Date",
+        "what": "What happened",
+        "change": "Change",
+        "balance": "Cans after",
+        "by": "By"
+      },
+      "types": {
+        "opening": "Opening balance",
+        "delivery": "Full cans given",
+        "return": "Empty cans taken",
+        "reversal": "Reversal",
+        "correction": "Count corrected"
+      },
+      "reverses": "Cancels entry #{{id}}. {{note}}",
+      "today": "Today",
+      "youDemo": "You (demo)"
+    },
+    "correction": {
+      "title": "Correct can count",
+      "help": "Our records say {{count}} cans. Enter the number you counted. This adds a new entry; old entries stay.",
+      "count": "Cans they really have",
+      "countError": "Enter a whole number from 0 to 500.",
+      "reason": "Reason",
+      "reasonHint": "Required. For example: counted at the door with the customer.",
+      "reasonError": "Write a reason of at least 5 letters. The owner sees it in the audit log.",
+      "save": "Save correction",
+      "savedDemo": "Demo: correction added to the list below. Nothing was saved.",
+      "noChange": "The count is the same, so no entry was added."
+    }
   }
 }

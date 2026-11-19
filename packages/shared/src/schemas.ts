@@ -36,3 +36,14 @@ export const healthResponseSchema = z.object({
   time: z.string(),
 });
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
+
+/**
+ * Cleans what a person types or pastes into a 10-digit mobile field:
+ * drops spaces and dashes, and a leading +91 / 91 / 0 when the rest is 10 digits.
+ */
+export function normaliseMobileInput(v: string): string {
+  let d = v.replace(/\D/g, '');
+  if (d.length === 12 && d.startsWith('91')) d = d.slice(2);
+  else if (d.length === 11 && d.startsWith('0')) d = d.slice(1);
+  return d.slice(0, 10);
+}

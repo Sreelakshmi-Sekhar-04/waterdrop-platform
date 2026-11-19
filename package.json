@@ -19,7 +19,9 @@
     "dev:admin": "pnpm --filter @wtrdrop/admin dev",
     "dev:mobile": "pnpm --filter @wtrdrop/mobile start",
     "test:e2e": "pnpm --filter @wtrdrop/admin build && pnpm --filter @wtrdrop/admin test:e2e",
-    "check:mobile": "pnpm --filter @wtrdrop/mobile export:check"
+    "test:e2e:mobile": "pnpm --filter @wtrdrop/mobile test:e2e",
+    "check:mobile": "pnpm --filter @wtrdrop/mobile export:check",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
