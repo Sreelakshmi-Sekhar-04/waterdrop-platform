@@ -59,6 +59,8 @@ export const ORDER_TRANSITIONS: Readonly<Record<OrderStatus, readonly Transition
     { to: 'CANCELLED', allowed: ADMINS, reasonRequired: true },
   ],
   RESCHEDULE_PENDING: [
+    // A new day or time chosen by the office (capacity booked again), then assigned as usual.
+    { to: 'ACCEPTED', allowed: ADMINS },
     { to: 'ASSIGNED', allowed: ADMINS },
     { to: 'CANCELLED', allowed: ['customer', ...ADMINS] },
   ],

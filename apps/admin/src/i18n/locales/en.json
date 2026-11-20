@@ -14,7 +14,7 @@
     "skipToContent": "Skip to main content",
     "language": "മലയാളം",
     "languageLabel": "Switch language to Malayalam",
-    "foundationNotice": "Orders, Customers, Delivery staff and Settings are real. The Today page still shows made-up demo data (it becomes real in Phase 7), and giving orders to drivers arrives in Phase 5.",
+    "foundationNotice": "Orders, Deliveries, Customers, Delivery staff, Cans and stock and Settings are real. The Today page still shows made-up demo data (it becomes real in Phase 7). Payments arrive in Phase 6.",
     "signOut": "Sign out"
   },
   "today": {
@@ -134,9 +134,9 @@
     "accepted_other": "{{count}} orders accepted.",
     "acceptedSome_one": "{{count}} order accepted. {{skipped}} had already changed, so they were left as they are.",
     "acceptedSome_other": "{{count}} orders accepted. {{skipped}} had already changed, so they were left as they are.",
-    "assignLater": "Giving orders to a driver is built in Phase 5. For now these orders wait here.",
     "todayDate": "Today, {{date}}",
-    "tomorrowDate": "Tomorrow, {{date}}"
+    "tomorrowDate": "Tomorrow, {{date}}",
+    "assignOn": "Give these orders to a delivery person on the"
   },
   "roles": {
     "owner": "Owner",
@@ -222,10 +222,6 @@
     "note": "Note",
     "openMap": "Open saved location in Maps",
     "noPin": "No map location saved",
-    "ledger": {
-      "title": "Can history",
-      "notYet": "Can deliveries and returns will be recorded here from Phase 5, when delivery is built."
-    },
     "orders": "Orders",
     "noOrders": "No orders yet."
   },
@@ -365,7 +361,13 @@
     "WINDOW_NAME_TAKEN": "A delivery time with this name already exists.",
     "WINDOW_TIMES": "The end time must be after the start time.",
     "SETUP_INCOMPLETE": "Ordering is not set up yet: add a price and delivery times under Settings.",
-    "ACCOUNT_DISABLED": "This customer is switched off. Switch them on first."
+    "ACCOUNT_DISABLED": "This customer is switched off. Switch them on first.",
+    "ROUTE_ALREADY_STARTED": "This route has started, so its stops cannot be changed now.",
+    "ROUTE_ENDED": "This route has ended.",
+    "ROUTE_NOT_ENDED": "The delivery person has not ended this day yet.",
+    "STOPS_CHANGED": "The stops changed. The page has been reloaded; try again.",
+    "NOT_ENOUGH_EMPTIES": "There are not that many empty cans at the depot.",
+    "NOT_ENOUGH_DAMAGED": "There are not that many damaged cans."
   },
   "newOrder": {
     "title": "New order",
@@ -495,5 +497,191 @@
     "savedWithOrders_one": "{{when}} closed. {{count}} order is already booked then; call that customer.",
     "savedWithOrders_other": "{{when}} closed. {{count}} orders are already booked then; call those customers.",
     "reopened": "{{when}} is open again."
+  },
+  "deliveries": {
+    "toCheck": "Finished days to check",
+    "waiting": "Waiting for a delivery person",
+    "noStaff": "There is no active delivery person yet. Add one on the page:",
+    "noneWaiting": "No accepted orders are waiting for this day.",
+    "assignLabel": "Give selected orders to a delivery person",
+    "giveTo": "Give to",
+    "assign": "Give orders",
+    "selectAll": "Select all waiting orders",
+    "assigned_one": "{{count}} order given to {{name}}.",
+    "assigned_other": "{{count}} orders given to {{name}}.",
+    "assignedSome_one": "{{count}} order given to {{name}}. {{skipped}} had already changed, so they were left as they are.",
+    "assignedSome_other": "{{count}} orders given to {{name}}. {{skipped}} had already changed, so they were left as they are.",
+    "failed": "Could not be delivered",
+    "newTime": "Choose a new time",
+    "saveTime": "Save new time",
+    "noSlot": "No delivery time on this day has room for these cans. Try another day.",
+    "rescheduled": "{{no}} moved to {{when}}. It now waits for a delivery person.",
+    "cans_one": "{{count}} can",
+    "cans_other": "{{count}} cans",
+    "reason": {
+      "NOT_HOME": "Nobody home",
+      "LOCKED": "Gate or door locked",
+      "REFUSED": "Customer refused",
+      "WRONG_ADDRESS": "Wrong address",
+      "OUT_OF_STOCK": "Ran out of cans",
+      "OTHER": "Other reason"
+    },
+    "routes": "Routes",
+    "noRoutes": "No orders have been given to anyone for this day yet.",
+    "trip": {
+      "planned": "Not started",
+      "on_route": "On the way",
+      "ended": "Day ended, to check",
+      "reconciled": "Checked"
+    },
+    "move": "Give route to someone else",
+    "check": "Check and close day",
+    "progress_one": "{{done}} of {{count}} stop done",
+    "progress_other": "{{done}} of {{count}} stops done",
+    "toLoad": "Full cans to load",
+    "loaded": "Loaded",
+    "fullDelivered": "Delivered",
+    "empties": "Empties back",
+    "method": {
+      "cash": "Cash",
+      "upi": "UPI",
+      "later": "Pay later"
+    },
+    "payLater": "pay later",
+    "delivered": "Gave {{full}} · took {{empty}} empties · {{money}}",
+    "overLimit": "Over credit limit",
+    "staffNote": "Delivery person's note",
+    "officeNote": "Office note",
+    "up": "Move {{no}} up",
+    "down": "Move {{no}} down",
+    "remove": "Remove",
+    "removed": "{{no}} taken off {{name}}'s route. It waits for a delivery person again.",
+    "allMatch": "Everything matches.",
+    "short": "{{what}}: {{n}} short",
+    "extra": "{{what}}: {{n}} extra",
+    "fullCans": "Full cans",
+    "emptyCans": "Empty cans",
+    "cash": "Cash",
+    "checkTitle": "Check {{name}}'s day",
+    "what": "What",
+    "expected": "Expected",
+    "counted": "Counted",
+    "damagedOf_one": "{{count}} of them damaged",
+    "damagedOf_other": "{{count}} of them damaged",
+    "whatHappened": "What happened to the difference? (needed)",
+    "noteOptional": "Note (optional)",
+    "writeOffHint": "Closing the day writes the missing or extra cans off the van, so the stock count stays right.",
+    "closeDay": "Close the day",
+    "checked": "{{name}}'s day is checked and closed.",
+    "moveTitle": "Give {{name}}'s route to someone else",
+    "moveHint": "Every stop on this route moves to the person you choose, in the same order.",
+    "moveSave": "Move the route",
+    "moved_one": "{{count}} stop moved from {{from}} to {{to}}.",
+    "moved_other": "{{count}} stops moved from {{from}} to {{to}}."
+  },
+  "stock": {
+    "total_one": "{{count}} can in all",
+    "total_other": "{{count}} cans in all",
+    "actions": {
+      "filled": "Cans filled at plant",
+      "count": "Count the depot",
+      "bought": "New cans bought",
+      "discarded": "Throw away damaged"
+    },
+    "depotFull": "Full at depot",
+    "depotEmpty": "Empty at depot",
+    "onVans": "On vans",
+    "vanSplit": "{{full}} full · {{empty}} empty",
+    "withCustomers": "With customers",
+    "damaged": "Damaged",
+    "routesOpen_one": "{{count}} route is still out or not checked, so van counts may change. See",
+    "routesOpen_other": "{{count}} routes are still out or not checked, so van counts may change. See",
+    "recent": "Recent depot entries",
+    "noneYet": "No depot entries yet.",
+    "cols": {
+      "when": "When",
+      "what": "What",
+      "cans": "Cans",
+      "by": "By",
+      "note": "Note"
+    },
+    "kind": {
+      "count": "Count",
+      "filled": "Filled",
+      "bought": "Bought",
+      "discarded": "Thrown away",
+      "shortage": "Van short",
+      "surplus": "Van extra"
+    },
+    "place": {
+      "depot": "Depot",
+      "trip": "Van",
+      "customer": "Customer",
+      "damaged": "Damaged pile",
+      "outside": "Outside"
+    },
+    "state": {
+      "full": "full",
+      "empty": "empty",
+      "damaged": "damaged"
+    },
+    "help": {
+      "filled": "Empty cans at the depot that came back full from the plant.",
+      "count": "Type what you counted. The difference from the system is recorded with your note.",
+      "bought": "New cans added to the business.",
+      "discarded": "Damaged cans that are thrown away or sold for scrap."
+    },
+    "cans": "Number of cans",
+    "boughtAs": "The new cans are",
+    "noteRequired": "Note (needed)",
+    "noteOptional": "Note (optional)",
+    "numberNeeded": "Type a number of cans.",
+    "saved": {
+      "filled_one": "{{count}} can marked as filled.",
+      "filled_other": "{{count}} cans marked as filled.",
+      "bought_one": "{{count}} new can added.",
+      "bought_other": "{{count}} new cans added.",
+      "discarded_one": "{{count}} damaged can thrown away.",
+      "discarded_other": "{{count}} damaged cans thrown away.",
+      "count": "Count saved."
+    }
+  },
+  "ledger": {
+    "title": "Cans, deposit and money",
+    "cansHeld": "Our cans with them",
+    "deposit": "Deposit held",
+    "cover_one": "Covers {{count}} can",
+    "cover_other": "Covers {{count}} cans",
+    "due": "Amount due",
+    "advance": "Paid in advance",
+    "overLimit": "Above credit limit of {{limit}}",
+    "tabs": {
+      "cans": "Cans",
+      "deposit": "Deposit",
+      "money": "Money"
+    },
+    "empty": "No entries yet.",
+    "cols": {
+      "entry": "Entry",
+      "change": "Change",
+      "after": "After",
+      "ref": "Order / reason"
+    },
+    "order": "Order",
+    "entry": {
+      "delivery": "Delivered",
+      "return": "Empties returned",
+      "reversal": "Undone",
+      "opening": "Opening balance",
+      "adjustment": "Correction",
+      "charge": "Deposit charged",
+      "refund": "Deposit refunded",
+      "delivery_charge": "Delivery charged",
+      "payment": "Payment"
+    },
+    "coverChange": "{{n}} cans covered",
+    "dueAmount": "{{amount}} due",
+    "note": "Entries are never changed. A mistake is fixed by a new entry that reverses it.",
+    "noCredit": "No credit limit set"
   }
 }

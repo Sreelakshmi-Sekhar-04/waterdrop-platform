@@ -7,6 +7,7 @@ import { call } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { Dialog } from '../components/Dialog';
 import { Chip, LiveMessage, PageHeader } from '../components/ui';
+import { CustomerLedgers } from '../components/CustomerLedgers';
 import { CustomerOrders, CustomerPrice } from '../components/CustomerOrders';
 
 interface Address {
@@ -192,10 +193,7 @@ export function CustomerDetailPage() {
 
       <CustomerOrders customerId={c.id} active={c.status === 'active' && c.addresses.length > 0} />
 
-      <section aria-labelledby="ledger-h">
-        <h2 id="ledger-h">{t('customer.ledger.title')}</h2>
-        <div className="card empty">{t('customer.ledger.notYet')}</div>
-      </section>
+      <CustomerLedgers customerId={c.id} />
 
       <AddAddressDialog
         customerId={c.id}

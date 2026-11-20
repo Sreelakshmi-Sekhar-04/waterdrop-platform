@@ -39,3 +39,18 @@ export function useProfile(enabled = true) {
 /** Area name in the reader's language. */
 export const areaLabel = (a: Pick<Address, 'areaName' | 'areaNameMl'>, lang: string) =>
   lang === 'ml' && a.areaNameMl ? a.areaNameMl : a.areaName;
+
+/** Cans held, deposit held and the amount due (balancePaise above 0 means the customer owes). */
+export interface CustomerAccount {
+  cansHeld: number;
+  depositHeldPaise: number;
+  balancePaise: number;
+}
+
+export function useAccount(enabled = true) {
+  return useQuery({
+    queryKey: ['customer', 'account'],
+    enabled,
+    queryFn: () => api<CustomerAccount>('/customer/account'),
+  });
+}

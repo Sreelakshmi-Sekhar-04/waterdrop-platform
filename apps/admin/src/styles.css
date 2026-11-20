@@ -815,3 +815,104 @@ select,
   flex-wrap: wrap;
   gap: 0 var(--space-lg);
 }
+
+/* ---- Phase 5: deliveries, stock, ledgers ---- */
+.page section + section {
+  margin-top: var(--space-xl);
+}
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
+}
+.attention-list h2 {
+  margin-top: 0;
+}
+.route {
+  margin-bottom: var(--space-lg);
+}
+.route h3 {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.route-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+  font-weight: 700;
+}
+.route-progress meter {
+  flex: 1 1 160px;
+  height: 12px;
+}
+.route-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
+}
+.route-totals div {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  background: var(--color-mist);
+}
+.route-totals dt {
+  font-size: 13px;
+  font-weight: 700;
+}
+.route-totals dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+}
+.route-diff {
+  font-weight: 700;
+}
+.stops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.stop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--color-border);
+}
+.stop-no {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-mist);
+  font-weight: 900;
+}
+.stop-main {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.stop-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+.btn-icon {
+  min-width: var(--touch-min);
+  padding: 0;
+  font-size: 18px;
+}

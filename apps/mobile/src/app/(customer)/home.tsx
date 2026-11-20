@@ -12,15 +12,14 @@ import { Screen } from '../../components/Screen';
 import { ErrorState, Skeleton } from '../../components/States';
 import { StatusChip } from '../../components/StatusChip';
 import { Text } from '../../components/Text';
-import { areaLabel, useProfile } from '../../lib/customer';
+import { areaLabel, useAccount, useProfile } from '../../lib/customer';
 import { errorText } from '../../lib/errors';
 import { orderNo, quoteFor, useMyOrders, useOrderOptions, windowLabel } from '../../lib/orders';
 import { STATUS_LOOK } from '../../lib/status';
 
 /**
  * The 2-tap reorder home: the usual order is one big button, which opens the pre-filled order
- * screen. Cans held and amount due join this screen when deliveries and payments are recorded
- * (Phases 5 and 6).
+ * screen. Below it: the cans the customer holds and the amount due, from the ledgers (Phase 5).
  */
 export default function CustomerHome() {
   const { t, i18n } = useTranslation();
@@ -28,6 +27,8 @@ export default function CustomerHome() {
   const profile = useProfile();
   const options = useOrderOptions();
   const orders = useMyOrders();
+  const account = useAccount();
+  const acc = account.data;
   const o = options.data;
   const address = profile.data?.addresses.find((a) => a.id === o?.addressId);
   const open = orders.data?.filter((x) => !TERMINAL_STATUSES.includes(x.status)) ?? [];
@@ -83,6 +84,37 @@ export default function CustomerHome() {
       {o && !next ? <Message tone="warning" text={t('order.noWindows')} /> : null}
       {o && !address ? (
         <Button label={t('order.addAddress')} onPress={() => router.push('/(customer)/address')} />
+      ) : null}
+
+      {acc ? (
+        <View style={styles.tiles}>
+          <Card style={styles.tile}>
+            <Text variant="label" muted>
+              {t('customer.cansWithYou')}
+            </Text>
+            <Text variant="heading" testID="cans-held">
+              {acc.cansHeld}
+            </Text>
+            {acc.cansHeld > 0 ? <Text muted>{t('customer.cansWithYouHint')}</Text> : null}
+          </Card>
+          <Card style={styles.tile}>
+            <Text variant="label" muted>
+              {t('customer.amountDue')}
+            </Text>
+            {acc.balancePaise > 0 ? (
+              <>
+                <Text variant="heading" testID="amount-due">
+                  {formatINR(acc.balancePaise)}
+                </Text>
+                <Text muted>{t('customer.payOnDelivery')}</Text>
+              </>
+            ) : (
+              <Text variant="title" testID="amount-due">
+                {t('customer.allPaid')}
+              </Text>
+            )}
+          </Card>
+        </View>
       ) : null}
 
       {open.map((x) => {
@@ -141,4 +173,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   flex: { flex: 1, gap: spacing.xs },
+  tiles: { flexDirection: 'row', gap: spacing.md },
+  tile: { flex: 1, gap: spacing.xs },
 });

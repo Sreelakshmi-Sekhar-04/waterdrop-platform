@@ -15,6 +15,10 @@ const LIVE_SCREENS = new Set([
   '/order',
   '/placed',
   '/orders',
+  '/route',
+  '/deliver',
+  '/not-delivered',
+  '/day-end',
 ]);
 
 /**

@@ -40,12 +40,13 @@ import { releaseWindow, reserveWindow, windowSlots } from './windows.service';
 /** Largest order the office may enter for a phone-in customer (customers are held to the setting). */
 export const OFFICE_MAX_CANS = 100;
 
-/**
- * Cans the customer holds and how many their deposit covers. The can and deposit ledgers arrive in
- * Phase 5; until then nobody holds cans, so every order shows the deposit for its cans as an estimate.
- */
-async function canPosition(_db: DbOrTx, _customerId: string) {
-  return { held: 0, cover: 0 };
+/** Cans the customer holds and how many their deposit covers (cached from the ledgers, Phase 5). */
+async function canPosition(db: DbOrTx, customerId: string) {
+  const [c] = await db
+    .select({ held: customers.cansHeld, cover: customers.depositCoverCans })
+    .from(customers)
+    .where(eq(customers.id, customerId));
+  return { held: c?.held ?? 0, cover: c?.cover ?? 0 };
 }
 
 async function deliverableAddress(
@@ -218,7 +219,7 @@ export interface PlaceInput {
   note?: string;
 }
 
-async function writeHistory(
+export async function writeHistory(
   tx: DbOrTx,
   supplierId: string,
   orderId: string,

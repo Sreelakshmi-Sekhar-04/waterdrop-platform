@@ -1,5 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+import { addDays, istDate } from '@wtrdrop/shared';
+import { officeFromPage, staffPhone } from './api';
 import { ACCOUNTS, noHorizontalScroll, requestCode, type ProjectName } from './support';
 
 /**
@@ -16,6 +19,10 @@ let pin: string; // a PIN code only this project's new area uses
 let firstCodeAt = 0;
 const PASSWORD = 'kettle on the porch 42';
 const NEW_PASSWORD = 'monsoon rain at seven';
+const ashaPhone = () => (tag === 'D' ? '9847222211' : '9847222212');
+let maryId = '';
+let one: { id: string; orderNo: number };
+let two: { id: string; orderNo: number };
 
 test.beforeAll(async ({ browser }, info) => {
   const name = info.project.name as ProjectName;
@@ -30,6 +37,12 @@ test.beforeAll(async ({ browser }, info) => {
 test.afterAll(async () => {
   await context?.close();
 });
+
+/** Report screenshots (desktop only), only when SHOTS names a folder. */
+async function shot(name: string) {
+  if (process.env.SHOTS && tag === 'D')
+    await page.screenshot({ path: `${process.env.SHOTS}/${name}.png`, fullPage: true });
+}
 
 async function axe() {
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -312,6 +325,189 @@ test('Delivery staff: add, switch off and on', async () => {
   // Nothing to reset until they have set a PIN on their phone (reset is covered by the API tests).
   await expect(row).toContainText('Not signed in yet');
   await expect(row.getByRole('button', { name: 'Reset PIN' })).toHaveCount(0);
+  await axe();
+  await noHorizontalScroll(page);
+});
+
+test('Deliveries: give orders to a delivery person, arrange the stops and move the route', async () => {
+  const office = await officeFromPage(page);
+  const today = istDate(new Date());
+  // A delivery time open all day, so the test does not depend on the clock.
+  const { window } = await office.post<{ window: { id: string } }>('admin/windows', {
+    nameEn: `All day ${tag}`,
+    nameMl: `മുഴുവൻ ദിവസം ${tag}`,
+    startTime: '00:00',
+    endTime: '23:59',
+    capacityCans: 500,
+    daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+  });
+  const { customers } = await office.get<{ customers: { id: string }[] }>(
+    `admin/customers?q=${encodeURIComponent(`Mary Joseph ${tag}`)}`,
+  );
+  maryId = customers[0]!.id;
+  const { customer } = await office.get<{ customer: { addresses: { id: string }[] } }>(
+    `admin/customers/${maryId}`,
+  );
+  const place = async (qty: number) =>
+    (
+      await office.post<{ order: { id: string; orderNo: number } }>('admin/orders', {
+        customerId: maryId,
+        addressId: customer.addresses[0]!.id,
+        windowId: window.id,
+        date: today,
+        qty,
+        clientRequestId: randomUUID(),
+      })
+    ).order;
+  one = await place(1);
+  two = await place(2);
+  const asha = await office.post<{ userId: string }>('admin/staff', {
+    phone: ashaPhone(),
+    name: `Asha ${tag}`,
+  });
+  expect(asha.userId).toBeTruthy();
+
+  await nav('Deliveries');
+  const waiting = page.getByRole('region', { name: 'Waiting for a delivery person' });
+  for (const o of [one, two])
+    await waiting
+      .getByRole('row', { name: new RegExp(`WD-${o.orderNo}\\b`) })
+      .getByRole('checkbox')
+      .check();
+  const bar = page.getByRole('region', { name: 'Give selected orders to a delivery person' });
+  await bar.getByLabel('Give to').selectOption({ label: `Suresh ${tag}` });
+  await bar.getByRole('button', { name: 'Give orders' }).click();
+  await expect(page.getByText(`2 orders given to Suresh ${tag}.`)).toBeVisible();
+
+  const route = page.getByRole('article', { name: new RegExp(`^Suresh ${tag}`) });
+  await expect(route).toContainText('Not started');
+  await expect(route).toContainText('0 of 2 stops done');
+  await expect(route.getByRole('listitem').first()).toContainText(`WD-${one.orderNo}`);
+  await route.getByRole('button', { name: `Move WD-${two.orderNo} up` }).click();
+  await expect(route.getByRole('listitem').first()).toContainText(`WD-${two.orderNo}`);
+  await axe();
+  await noHorizontalScroll(page);
+
+  // M-13: Suresh is off today; the whole route goes to Asha.
+  await route.getByRole('button', { name: 'Give route to someone else' }).click();
+  const move = page.getByRole('dialog', { name: `Give Suresh ${tag}'s route to someone else` });
+  await move.getByLabel('Give to').selectOption({ label: `Asha ${tag}` });
+  await axe();
+  await move.getByRole('button', { name: 'Move the route' }).click();
+  await expect(page.getByText(`2 stops moved from Suresh ${tag} to Asha ${tag}.`)).toBeVisible();
+  const ashaRoute = page.getByRole('article', { name: new RegExp(`^Asha ${tag}`) });
+  await expect(ashaRoute.getByRole('listitem').first()).toContainText(`WD-${two.orderNo}`);
+});
+
+test('Deliveries: after the day, re-book the failed order and check the counts', async () => {
+  // On Asha's phone: load 3, deliver WD-one (₹40 cash of ₹190), WD-two not home, 1 full can short.
+  const phone = await staffPhone(ashaPhone());
+  const day = await phone.get<{ trip: { id: string } }>('staff/day');
+  const at = new Date().toISOString();
+  await phone.post(`staff/trips/${day.trip.id}/start`, {
+    clientActionId: randomUUID(),
+    loadFull: 3,
+  });
+  await phone.post(`staff/orders/${one.id}/deliver`, {
+    clientActionId: randomUUID(),
+    full: 1,
+    empties: 0,
+    payment: { method: 'cash', amountPaise: 4000 },
+    at,
+  });
+  await phone.post(`staff/orders/${two.id}/not-delivered`, {
+    clientActionId: randomUUID(),
+    reason: 'NOT_HOME',
+    at,
+  });
+  await phone.post(`staff/trips/${day.trip.id}/end`, {
+    clientActionId: randomUUID(),
+    returnFull: 1,
+    returnEmpty: 0,
+    returnDamaged: 0,
+    cashPaise: 4000,
+    note: 'One can fell at the junction',
+  });
+  await phone.dispose();
+
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Deliveries');
+  const failed = page
+    .getByRole('listitem')
+    .filter({ hasText: `WD-${two.orderNo}` })
+    .filter({
+      hasText: 'Nobody home',
+    });
+  await failed.getByRole('button', { name: 'Choose a new time' }).click();
+  const re = page.getByRole('dialog', { name: 'Choose a new time' });
+  await re.getByLabel('Delivery date').fill(addDays(istDate(new Date()), 1));
+  const allDay = await re.locator('option', { hasText: `All day ${tag}` }).getAttribute('value');
+  await re.getByLabel('Delivery time').selectOption(allDay!);
+  await axe();
+  await re.getByRole('button', { name: 'Save new time' }).click();
+  await expect(page.getByText(new RegExp(`WD-${two.orderNo} moved to Tomorrow`))).toBeVisible();
+
+  const route = page.getByRole('article', { name: new RegExp(`^Asha ${tag}`) });
+  await expect(route).toContainText('Day ended, to check');
+  await expect(route).toContainText('Full cans: 1 short');
+  await shot('admin-deliveries');
+  await route.getByRole('button', { name: 'Check and close day' }).click();
+  const check = page.getByRole('dialog', { name: `Check Asha ${tag}'s day` });
+  await expect(check.getByText('One can fell at the junction')).toBeVisible();
+  await check.getByRole('button', { name: 'Close the day' }).click();
+  await expect(check.getByText('Write a short reason.')).toBeVisible();
+  await shot('admin-check-day');
+  await axe();
+  await check
+    .getByLabel(/What happened to the difference/)
+    .fill('Broken can, Asha told the office');
+  await check.getByRole('button', { name: 'Close the day' }).click();
+  await expect(page.getByText(`Asha ${tag}'s day is checked and closed.`)).toBeVisible();
+  await expect(route).toContainText('Checked');
+  await axe();
+  await noHorizontalScroll(page);
+});
+
+test('Cans and stock: buy new cans, fill them, and count the depot', async () => {
+  await nav('Cans and stock');
+  await expect(page.getByTestId('stock-counts')).toContainText('With customers');
+  await page.getByRole('button', { name: 'New cans bought' }).click();
+  const buy = page.getByRole('dialog', { name: 'New cans bought' });
+  await buy.getByLabel('Number of cans').fill('20');
+  await axe();
+  await buy.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('20 new cans added.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Cans filled at plant' }).click();
+  const fill = page.getByRole('dialog', { name: 'Cans filled at plant' });
+  await fill.getByLabel('Number of cans').fill('5');
+  await fill.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('5 cans marked as filled.')).toBeVisible();
+  await expect(page.locator('.table-wrap', { hasText: 'Filled' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Count the depot' }).click();
+  const count = page.getByRole('dialog', { name: 'Count the depot' });
+  await count.getByRole('button', { name: 'Save' }).click();
+  await expect(count.getByText('Write a short reason.')).toBeVisible();
+  await count.getByLabel('Note (needed)').fill('Monthly count');
+  await count.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Count saved.')).toBeVisible();
+  await shot('admin-stock');
+  await axe();
+  await noHorizontalScroll(page);
+});
+
+test('Customer: cans, deposit and money ledgers after the delivery', async () => {
+  await page.goto(`/customers/${maryId}`);
+  const balances = page.getByTestId('customer-balances');
+  await expect(balances).toContainText('Our cans with them');
+  await expect(balances).toContainText('₹150'); // ₹190 delivery, ₹40 paid in cash
+  const ledger = page.getByRole('region', { name: 'Cans', exact: true });
+  await expect(ledger.getByRole('row', { name: /Delivered/ })).toContainText('+1');
+  await page.getByRole('button', { name: /^Money/ }).click();
+  const money = page.getByRole('region', { name: 'Money', exact: true });
+  await expect(money.getByRole('row', { name: /Payment/ })).toContainText('−₹40');
+  await shot('admin-customer-ledgers');
   await axe();
   await noHorizontalScroll(page);
 });

@@ -1,5 +1,6 @@
 /**
- * Phase 1 platform tables, Phase 3 users and addresses, Phase 4 ordering. Business tables
+ * Phase 1 platform tables, Phase 3 users and addresses, Phase 4 ordering, Phase 5 delivery and
+ * ledgers. Business tables
  * (orders, ledgers, …) are added in the phase that builds each feature,
  * following the ERD in docs/PHASE-0-ANALYSIS.md §9.
  *
@@ -8,6 +9,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   bigserial,
   boolean,
   check,
@@ -25,7 +27,14 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { ORDER_CHANNELS, ORDER_STATUSES, ROLES } from '@wtrdrop/shared';
+import {
+  FAILURE_REASONS,
+  ORDER_CHANNELS,
+  ORDER_STATUSES,
+  PAYMENT_METHODS,
+  ROLES,
+  TRIP_STATUSES,
+} from '@wtrdrop/shared';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow();
@@ -37,6 +46,39 @@ export const idempotencyStateEnum = pgEnum('idempotency_state', ['in_progress', 
 export const customerTypeEnum = pgEnum('customer_type', ['household', 'office', 'shop']);
 export const orderStatusEnum = pgEnum('order_status', ORDER_STATUSES);
 export const orderChannelEnum = pgEnum('order_channel', ORDER_CHANNELS);
+export const tripStatusEnum = pgEnum('trip_status', TRIP_STATUSES);
+export const attemptOutcomeEnum = pgEnum('attempt_outcome', ['delivered', 'failed']);
+export const failureReasonEnum = pgEnum('failure_reason', FAILURE_REASONS);
+export const paymentMethodEnum = pgEnum('payment_method', PAYMENT_METHODS);
+export const canEntryEnum = pgEnum('can_entry_type', [
+  'delivery',
+  'return',
+  'reversal',
+  'opening',
+  'adjustment',
+]);
+export const depositEntryEnum = pgEnum('deposit_entry_type', [
+  'charge',
+  'reversal',
+  'refund',
+  'opening',
+  'adjustment',
+]);
+export const accountEntryEnum = pgEnum('account_entry_type', [
+  'delivery_charge',
+  'payment',
+  'reversal',
+  'opening',
+  'adjustment',
+]);
+export const stockPlaceEnum = pgEnum('stock_place', [
+  'depot',
+  'trip',
+  'customer',
+  'damaged',
+  'outside',
+]);
+export const canStateEnum = pgEnum('can_state', ['full', 'empty', 'damaged']);
 
 /** A water supplier (tenant). One row at launch; the design allows more later. */
 export const suppliers = pgTable('suppliers', {
@@ -234,12 +276,27 @@ export const customers = pgTable(
     privacyVersion: text('privacy_version'),
     /** Who created the record: the customer in the app, or an office user (A-01). */
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'restrict' }),
+    /**
+     * Cached balances, always equal to the sum of the matching ledger (Phase 5). Written only in
+     * the same transaction as a ledger entry, with this row locked.
+     */
+    cansHeld: integer('cans_held').notNull().default(0),
+    depositHeldPaise: integer('deposit_held_paise').notNull().default(0),
+    depositCoverCans: integer('deposit_cover_cans').notNull().default(0),
+    /** Money owed (positive) or paid in advance (negative). */
+    balancePaise: integer('balance_paise').notNull().default(0),
+    /** D-03: dues above this are flagged to the office. Never blocks a delivery. */
+    creditLimitPaise: integer('credit_limit_paise').notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     uniqueIndex('customers_supplier_user_uq').on(t.supplierId, t.userId),
     index('customers_supplier_idx').on(t.supplierId),
+    check(
+      'customers_balances_ck',
+      sql`cans_held >= 0 and deposit_held_paise >= 0 and deposit_cover_cans >= 0 and credit_limit_paise >= 0`,
+    ),
   ],
 );
 
@@ -486,6 +543,9 @@ export const orders = pgTable(
       .references(() => users.id, { onDelete: 'restrict' }),
     /** Whether the window's capacity is still held (released on cancel or reject). */
     capacityHeld: boolean('capacity_held').notNull().default(true),
+    /** Phase 5: the route this order is on, and its place in the route. */
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'restrict' }),
+    stopSeq: integer('stop_seq'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -494,6 +554,7 @@ export const orders = pgTable(
     uniqueIndex('orders_customer_request_uq').on(t.customerId, t.clientRequestId),
     index('orders_supplier_date_status_idx').on(t.supplierId, t.deliveryDate, t.status),
     index('orders_customer_idx').on(t.customerId, t.createdAt),
+    index('orders_trip_idx').on(t.tripId, t.stopSeq),
     check(
       'orders_money_ck',
       sql`subtotal_paise >= 0 and delivery_charge_paise >= 0 and deposit_paise >= 0 and total_paise = subtotal_paise + delivery_charge_paise + deposit_paise`,
@@ -546,4 +607,219 @@ export const orderStatusHistory = pgTable(
     at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('order_status_history_order_idx').on(t.orderId, t.at)],
+);
+
+// ------------------------------------------------------------------ Phase 5: delivery and ledgers
+
+/** One delivery person's route for one day (load-out, stops, day-end and reconciliation, M-03). */
+export const trips = pgTable(
+  'trips',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    staffUserId: uuid('staff_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    date: date('date', { mode: 'string' }).notNull(),
+    status: tripStatusEnum('status').notNull().default('planned'),
+    /** Full cans the delivery person confirmed loading at the start. */
+    loadFull: integer('load_full'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    /** Day-end: what the app expected back, and what was counted. */
+    expectedFull: integer('expected_full'),
+    expectedEmpty: integer('expected_empty'),
+    expectedCashPaise: integer('expected_cash_paise'),
+    returnFull: integer('return_full'),
+    returnEmpty: integer('return_empty'),
+    returnDamaged: integer('return_damaged'),
+    cashHandedPaise: integer('cash_handed_paise'),
+    endNote: text('end_note'),
+    reconciledBy: uuid('reconciled_by').references(() => users.id, { onDelete: 'restrict' }),
+    reconciledAt: timestamp('reconciled_at', { withTimezone: true }),
+    reconcileNote: text('reconcile_note'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('trips_staff_date_uq').on(t.supplierId, t.staffUserId, t.date),
+    index('trips_supplier_date_idx').on(t.supplierId, t.date),
+  ],
+);
+
+/** Each try at a stop: delivered (with counts and payment) or couldn't deliver (D-05). */
+export const deliveryAttempts = pgTable(
+  'delivery_attempts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'restrict' }),
+    tripId: uuid('trip_id')
+      .notNull()
+      .references(() => trips.id, { onDelete: 'restrict' }),
+    staffUserId: uuid('staff_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    outcome: attemptOutcomeEnum('outcome').notNull(),
+    failureReason: failureReasonEnum('failure_reason'),
+    note: text('note'),
+    fullDelivered: integer('full_delivered').notNull().default(0),
+    emptyCollected: integer('empty_collected').notNull().default(0),
+    /** Empties beyond what the customer held (R-07): received, but not taken off their balance. */
+    extraEmpties: integer('extra_empties').notNull().default(0),
+    chargePaise: integer('charge_paise').notNull().default(0),
+    depositCans: integer('deposit_cans').notNull().default(0),
+    depositPaise: integer('deposit_paise').notNull().default(0),
+    paymentMethod: paymentMethodEnum('payment_method'),
+    amountCollectedPaise: integer('amount_collected_paise').notNull().default(0),
+    /** Dues went above the customer's credit limit with this stop (flag for the office, D-03). */
+    overCreditLimit: boolean('over_credit_limit').notNull().default(false),
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
+    /** When it happened on the phone (may be earlier than recordedAt after offline use). */
+    happenedAt: timestamp('happened_at', { withTimezone: true }).notNull(),
+    recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Offline replay guard: the phone sends the same id until the server answers. */
+    clientActionId: uuid('client_action_id').notNull(),
+    undoneAt: timestamp('undone_at', { withTimezone: true }),
+    undoneBy: uuid('undone_by').references(() => users.id, { onDelete: 'restrict' }),
+  },
+  (t) => [
+    uniqueIndex('delivery_attempts_action_uq').on(t.supplierId, t.clientActionId),
+    index('delivery_attempts_order_idx').on(t.orderId, t.recordedAt),
+    index('delivery_attempts_trip_idx').on(t.tripId),
+    check(
+      'delivery_attempts_counts_ck',
+      sql`full_delivered >= 0 and empty_collected >= 0 and extra_empties >= 0 and charge_paise >= 0 and deposit_paise >= 0 and amount_collected_paise >= 0`,
+    ),
+  ],
+);
+
+const ledgerCommon = () => ({
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  supplierId: uuid('supplier_id')
+    .notNull()
+    .references(() => suppliers.id, { onDelete: 'restrict' }),
+  customerId: uuid('customer_id')
+    .notNull()
+    .references(() => customers.id, { onDelete: 'restrict' }),
+  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'restrict' }),
+  attemptId: uuid('attempt_id').references(() => deliveryAttempts.id, { onDelete: 'restrict' }),
+  reason: text('reason'),
+  actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'restrict' }),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Cans the customer holds: +full delivered, −empties returned. Append-only (trigger). */
+export const canLedger = pgTable(
+  'can_ledger',
+  {
+    ...ledgerCommon(),
+    entryType: canEntryEnum('entry_type').notNull(),
+    delta: integer('delta').notNull(),
+    balanceAfter: integer('balance_after').notNull(),
+    reversesEntryId: bigint('reverses_entry_id', { mode: 'number' }),
+  },
+  (t) => [
+    index('can_ledger_customer_idx').on(t.customerId, t.id),
+    check('can_ledger_balance_ck', sql`balance_after >= 0`),
+  ],
+);
+
+/** Refundable deposit the business holds, and how many cans it covers (D-04). */
+export const depositLedger = pgTable(
+  'deposit_ledger',
+  {
+    ...ledgerCommon(),
+    entryType: depositEntryEnum('entry_type').notNull(),
+    deltaPaise: integer('delta_paise').notNull(),
+    deltaCans: integer('delta_cans').notNull(),
+    balanceAfterPaise: integer('balance_after_paise').notNull(),
+    coverAfterCans: integer('cover_after_cans').notNull(),
+    reversesEntryId: bigint('reverses_entry_id', { mode: 'number' }),
+  },
+  (t) => [index('deposit_ledger_customer_idx').on(t.customerId, t.id)],
+);
+
+/** Money: +charges for deliveries, −payments. The balance is what the customer owes (M-02). */
+export const accountLedger = pgTable(
+  'account_ledger',
+  {
+    ...ledgerCommon(),
+    entryType: accountEntryEnum('entry_type').notNull(),
+    deltaPaise: integer('delta_paise').notNull(),
+    balanceAfterPaise: integer('balance_after_paise').notNull(),
+    paymentId: uuid('payment_id').references(() => payments.id, { onDelete: 'restrict' }),
+    reversesEntryId: bigint('reverses_entry_id', { mode: 'number' }),
+  },
+  (t) => [index('account_ledger_customer_idx').on(t.customerId, t.id)],
+);
+
+/** Money received (cash or UPI). Verification against the bank comes in Phase 6. */
+export const payments = pgTable(
+  'payments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'restrict' }),
+    method: paymentMethodEnum('method').notNull(),
+    amountPaise: integer('amount_paise').notNull(),
+    /** UPI reference or last digits, as the delivery person typed it. */
+    reference: text('reference'),
+    collectedBy: uuid('collected_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'restrict' }),
+    attemptId: uuid('attempt_id').references(() => deliveryAttempts.id, { onDelete: 'restrict' }),
+    /** Set when an undo reverses it; the row itself stays. */
+    reversedAt: timestamp('reversed_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('payments_customer_idx').on(t.customerId, t.createdAt),
+    index('payments_trip_idx').on(t.tripId),
+    check('payments_amount_ck', sql`amount_paise > 0 and method <> 'later'`),
+  ],
+);
+
+/**
+ * Every physical can movement between places (depot, a route's van, a customer, damaged, outside
+ * the business). Counts per place are sums of these rows. Append-only (trigger).
+ */
+export const stockMovements = pgTable(
+  'stock_movements',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    fromPlace: stockPlaceEnum('from_place').notNull(),
+    fromState: canStateEnum('from_state').notNull(),
+    toPlace: stockPlaceEnum('to_place').notNull(),
+    toState: canStateEnum('to_state').notNull(),
+    qty: integer('qty').notNull(),
+    /** load_out, delivery, pickup, day_end, filled, count, bought, undo */
+    kind: text('kind').notNull(),
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'restrict' }),
+    attemptId: uuid('attempt_id').references(() => deliveryAttempts.id, { onDelete: 'restrict' }),
+    customerId: uuid('customer_id').references(() => customers.id, { onDelete: 'restrict' }),
+    note: text('note'),
+    actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'restrict' }),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('stock_movements_supplier_idx').on(t.supplierId, t.at),
+    index('stock_movements_trip_idx').on(t.tripId),
+    check('stock_movements_qty_ck', sql`qty > 0`),
+  ],
 );

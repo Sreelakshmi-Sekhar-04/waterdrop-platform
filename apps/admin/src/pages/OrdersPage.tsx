@@ -209,7 +209,9 @@ export function OrdersPage() {
         </p>
       ) : null}
       {show === 'needsDriver' && visible.length > 0 ? (
-        <p className="muted">{t('orders.assignLater')}</p>
+        <p className="muted">
+          {t('orders.assignOn')} <Link to={`/deliveries?date=${date}`}>{t('nav.deliveries')}</Link>
+        </p>
       ) : null}
 
       {list.isError ? (

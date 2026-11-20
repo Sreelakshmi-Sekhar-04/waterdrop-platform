@@ -13,6 +13,8 @@ interface Props {
   selected?: boolean;
   icon?: IconName;
   accessibilityHint?: string;
+  /** Only when the visible label needs context (it must start with the visible words). */
+  accessibilityLabel?: string;
   compact?: boolean;
 }
 
@@ -42,6 +44,7 @@ export function Button({
   selected,
   icon,
   accessibilityHint,
+  accessibilityLabel,
   compact,
 }: Props) {
   const look = LOOK[variant];
@@ -50,6 +53,7 @@ export function Button({
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled, selected: !!selected }}
       accessibilityHint={accessibilityHint}
+      accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [

@@ -6,11 +6,11 @@ Read this file first at the start of every Claude Code session. Update it at the
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 4: Ordering and capacity** (complete, waiting for review) |
-| Phase status | Phase 3 approved 19 Nov 2026 ("start Phase 4"). Phase 4 delivered 19 Nov on branch `phase-4-ordering` (built on `phase-3-auth`). **Waiting for Sreelakshmi's review** before Phase 5. |
-| Next step | Review the Phase 4 report below, then Phase 5 (delivery: driver assignment, route, delivery with can counts, can ledger). |
-| Coding started? | Yes. Do not start Phase 5 until Phase 4 is reviewed. |
-| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-4-ordering`. |
+| Current phase | **Phase 5: Delivery and ledgers** (complete, waiting for review) |
+| Phase status | Phase 4 approved 20 Nov 2026 ("start Phase 5"). Phase 5 delivered 20 Nov on branch `phase-5-delivery` (built on `phase-4-ordering`). **Waiting for Sreelakshmi's review** before Phase 6. |
+| Next step | Review the Phase 5 report below, then Phase 6 (payments: UPI checking, dues, credit limits, deposit refunds, corrections and opening balances). |
+| Coding started? | Yes. Do not start Phase 6 until Phase 5 is reviewed. |
+| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-5-delivery`. |
 | Docs location | Repo `docs/` is the source of truth from Phase 1. Project files `wtrdrop/docs/` hold a copy. |
 
 ## Key references
@@ -259,3 +259,55 @@ Defects found and fixed during Phase 4: (a) every pop-up in the admin portal had
 **11. Deviations from the original requirements** — none. The details left open by the approved decisions are recorded in ADR 0003 and the change log.
 
 **12. Recommended next step** — Phase 5: delivery. Give orders to drivers by area, the driver's route for the day, delivery with full and empty can counts, failed delivery and reschedule, and the can ledger that makes the deposit exact.
+
+### Phase 5: Delivery and ledgers (20 Nov 2026)
+
+**1. What was completed**
+- **Office, Deliveries page** (portal): pick a day, tick accepted orders and give them to a delivery person in one step; see each route with progress, cans loaded, delivered and returned, cash, UPI and pay-later totals; re-order stops with arrows, take a stop off, or give a whole route to someone else (M-13) before it starts; re-book orders that could not be delivered (new day and time); check each finished day against what the app expected and close it, with a note when something differs.
+- **Delivery person, phone app** (now real, no demo data): load-out count, then one big "next stop" card (cans to give, cans they hold, old due, Call, Map, Delivered, Couldn't deliver). Delivered: full cans, empties (defaults to the swap), the amount (this stop or with old due) and cash / UPI / pay later. Couldn't deliver: a reason. Undo for 10 minutes. End day: count full, empty, damaged cans and cash. Works with no signal: actions wait on the phone and are sent in order later, never twice.
+- **Ledgers**: cans held, deposit and money owed for every customer, append-only, updated in the same transaction as the delivery. Shown on the customer's page in the portal, and as two tiles ("Our cans with you", "Amount due") on the customer's home screen.
+- **Cans and stock page** (portal): full and empty at the depot, on vans, with customers, damaged, and the total. The office records cans filled at the plant, new cans bought, damaged cans thrown away and a depot count.
+- Pay later is always allowed; a due above the credit limit is flagged, never blocked (D-03).
+
+**2. Files created or changed**
+- Shared: `packages/shared/src/delivery.ts` (+ tests), `order-status.ts` (office re-book).
+- API: `src/db/schema.ts`, migration `0004_phase5_delivery_ledgers.sql` (7 tables, 9 enums, customer balance columns, append-only triggers), `src/modules/delivery/{delivery.service,ledgers,stock.service,delivery.routes}.ts`, `ordering/orders.service.ts`, `app.ts`, `test/delivery.test.ts`.
+- Mobile: `src/lib/{outbox,staff}.ts`, `src/lib/customer.ts`, `(staff)/{route,deliver,not-delivered,day-end}.tsx`, `(customer)/home.tsx`, `components/{Button,RoleGate}.tsx`, locales, `e2e/{delivery.spec,office-api}.ts`, `e2e/{screens,sign-in}.spec.ts`. `src/demo/fixtures.ts` is now empty (kept, not deleted, per the no-delete rule).
+- Admin: `src/pages/{Deliveries,Stock}Page.tsx`, `src/components/CustomerLedgers.tsx`, `src/lib/deliveries.ts`, `App.tsx`, `CustomerDetailPage.tsx`, `OrdersPage.tsx`, `styles.css`, locales, `e2e/{api,portal.spec}.ts`.
+- Docs: `docs/adr/0004-delivery-and-ledgers.md`, README API table, this report, change log.
+
+**3. Architecture and design decisions** — see ADR 0004. In short: a route is one person per day; every delivery is one database transaction across the order, three ledgers, payment, stock and audit; ledgers and stock are append-only and corrected only by reversing entries; stock is computed from movements, never typed; the phone queues actions with an id so retries are safe.
+
+**4. APIs and database changes**
+- 17 new endpoints (README table): delivery person (6), customer account (1), office deliveries, routes, re-booking and day check (7), ledgers (1), stock (2).
+- Database: new tables `trips`, `delivery_attempts`, `can_ledger`, `deposit_ledger`, `account_ledger`, `payments`, `stock_movements`; `customers` gains cans held, deposit held and cover, balance and credit limit (with a check); `orders` gains route and stop number. A trigger refuses changes to ledger and stock rows.
+
+**5. Tests executed** (all run on 20 Nov 2026 in the development container, PostgreSQL 16)
+- `pnpm lint`, `pnpm typecheck` (all packages), `prettier --check`, `pnpm check:i18n` (admin 538 texts, mobile 290).
+- `pnpm test`: design tokens 12, shared 47 (7 new), API 111 in 8 files against a real database (14 new delivery tests: assignment and staff seeing only their own route (scenario 2); stop order; start route; one-transaction delivery with audit (scenarios 11, 12); offline replay; pay later above the credit limit flagged; undo, then refused after 11 minutes; failed delivery giving capacity back; day end with ₹30 short and the check needing a reason; stock total across all places; re-book to another day and assign again; extra empties, short delivery, more than ordered refused; move a route and take a stop off; another supplier's data; ledgers cannot be edited). Every test also checks that stored balances equal the ledger entries (scenario 5).
+- Admin Playwright: 22 scenarios × desktop and phone = 44, against the real API. New: give two orders to a person, re-order stops, move the route to someone else; after the day (done on the delivery person's account through the API), re-book the failed order to tomorrow and check the day (1 full can short, reason required); stock: buy, fill, count (note required); customer ledgers (₹190 charged, ₹40 paid, ₹150 due). axe WCAG 2 A/AA and no horizontal scroll on each.
+- Mobile Playwright: 19 tests at Pixel 7 size against the real API. New (6): delivery person signs in and loads the van, delivers with cash, can't deliver, undoes and records again, ends the day; the office sees matching ledgers and stock; the customer's home shows 2 cans and "All paid". The 6 old tests of the demo staff screens were removed because those screens are now real.
+- `expo export --platform android` bundle build.
+
+**6. Actual test results** — all passed: 170 unit/integration tests, 44 admin browser tests, 19 mobile browser tests, translation check, Android bundle.
+
+Defects found and fixed during Phase 5: (a) after a delivery the phone stacked a second copy of the route screen, so Back showed an old route; it now goes back. (b) The two "Undo" buttons in the done list had the same name for screen readers (and the test undid the wrong stop); each now names the customer. (c) The route showed "1 cans"; fixed in both languages. (d) A delivery recorded offline took the server's time for "recorded at"; it now uses the request time consistently. (e) The office day list sent delivery staff phone numbers it did not need; removed.
+
+**7. Known defects and limitations**
+- The credit limit is ₹0 for everyone until it can be edited (Phase 6), so every amount due is flagged "over credit limit" (flag only, never blocks).
+- Payments are recorded but not yet checked (UPI reference matching), and there is no dues list, deposit refund, opening balance or office correction yet: Phase 6.
+- No vehicles: a route is a person. Walk-in sales at the depot (M-08) and customers choosing their own new time after a failed delivery are not built.
+- Undo needs a signal. Customers get no SMS or push message about deliveries yet.
+- The offline queue was tested in the browser build; a real Android phone losing signal (Maestro) has not been tested. Real SMS is still not connected.
+- Malayalam texts are draft translations and need a native speaker's review. All prices and numbers are DEMO values.
+- The branch has not been pushed (GitHub App still missing); a git bundle is in project files.
+
+**8. Security considerations** — a delivery person can read and change only their own route (other routes answer "not found", tested); customers see only their own balances. Every query is limited to the signed-in supplier (tested with a second supplier). Ledgers and stock cannot be changed or deleted even by the app's database user. The server works out every amount; the phone only sends counts and the amount collected. Office lists show only the last 4 digits of customer phones. Every delivery, undo, re-book, route change, day check and stock entry is audited.
+
+**9. Pending decisions** — none blocking. Before launch: real credit limits (or confirm ₹0 = no credit), how many cans the business owns (opening stock count), and each existing customer's cans held, deposit and dues (opening balances, Phase 6).
+
+**10. Recommendations** — do one real trial day with one delivery person on an Android phone, including a stretch with no signal, before Phase 6 is finished. Count the depot on the first day using "Count the depot" so the stock total starts right.
+
+**11. Deviations from the original requirements** — none. The details left open by the approved decisions are recorded in ADR 0004 and the change log.
+
+**12. Recommended next step** — Phase 6: payments. UPI and cash checking at day end, dues list with reminders, credit limits per customer, deposit refunds when cans come back, opening balances for existing customers, and office corrections with reasons.

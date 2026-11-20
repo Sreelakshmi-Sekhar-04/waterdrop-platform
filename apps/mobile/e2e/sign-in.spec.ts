@@ -82,14 +82,18 @@ test('delivery staff: SMS code once, weak PIN refused, then daily PIN sign-in', 
   await tapPin(page, '5831');
   await expect(page.getByText('Type the PIN again')).toBeVisible();
   await tapPin(page, '5831');
-  await expect(page.getByText("Today's route")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: "Today's route" })).toBeVisible({
+    timeout: 15_000,
+  });
 
   await page.getByRole('button', { name: /Sign out/ }).click();
   await expect(page.getByText('Enter your PIN')).toBeVisible({ timeout: 15_000 });
   await tapPin(page, '9999');
   await expect(page.getByText(/Wrong PIN. 4 tries left/)).toBeVisible();
   await tapPin(page, '5831');
-  await expect(page.getByText("Today's route")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: "Today's route" })).toBeVisible({
+    timeout: 15_000,
+  });
 });
 
 test('a number with no staff account cannot use staff sign-in', async ({ page }) => {

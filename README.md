@@ -84,45 +84,59 @@ codes to a local file that the tests read.
 
 All paths start with `/api/v1`. "Office" means the admin and owner roles. Every change by the office is audited.
 
-| Method              | Path                                          | Who                                                    |
-| ------------------- | --------------------------------------------- | ------------------------------------------------------ |
-| GET                 | `/health`                                     | Anyone                                                 |
-| POST                | `/auth/otp/request`                           | Anyone (same answer whether or not an account exists)  |
-| POST                | `/auth/otp/verify`                            | Anyone with the code; `app` = customer, staff or admin |
-| POST                | `/auth/admin/password/setup`                  | Office, first sign-in only (setup token)               |
-| POST                | `/auth/admin/password/change`                 | Office                                                 |
-| POST                | `/auth/staff/pin`                             | Delivery staff, after an SMS code on this phone        |
-| POST                | `/auth/staff/pin/sign-in`                     | Delivery staff on a phone with a PIN                   |
-| POST                | `/auth/refresh`, `/auth/sign-out`             | Any session                                            |
-| GET, PATCH          | `/me`                                         | Any signed-in user                                     |
-| GET, PUT            | `/customer/profile`                           | Customer                                               |
-| GET, POST           | `/customer/addresses`                         | Customer                                               |
-| PATCH, DELETE       | `/customer/addresses/:id`                     | Customer (delete archives)                             |
-| GET                 | `/service-areas`                              | Any signed-in user                                     |
-| GET, POST, PATCH    | `/admin/service-areas[/:id]`                  | Office                                                 |
-| GET, POST, PATCH    | `/admin/customers[/:id]`                      | Office                                                 |
-| POST, PATCH, DELETE | `/admin/customers/:id/addresses[/:addressId]` | Office                                                 |
-| GET, POST, PATCH    | `/admin/staff[/:userId]`                      | Office                                                 |
-| POST                | `/admin/staff/:userId/reset-pin`              | Office                                                 |
-| GET, POST, PATCH    | `/admin/team[/:userId]`                       | Owner                                                  |
-| GET                 | `/customer/order-options?addressId`           | Customer (price, totals, bookable delivery times)      |
-| GET, POST           | `/customer/orders`                            | Customer (POST: 201 new, 200 same `clientRequestId`)   |
-| GET                 | `/customer/orders/:id`                        | Customer (own orders only)                             |
-| POST                | `/customer/orders/:id/cancel`                 | Customer, until out for delivery                       |
-| GET, POST           | `/admin/orders`                               | Office (list by `date` or `customerId`, `status`, `q`) |
-| GET                 | `/admin/orders/:id`                           | Office                                                 |
-| POST                | `/admin/orders/:id/transition`                | Office (accept; reject or cancel with a reason)        |
-| POST                | `/admin/orders/bulk-accept`                   | Office                                                 |
-| GET                 | `/admin/customers/:id/order-options`          | Office                                                 |
-| GET, PUT            | `/admin/customers/:id/price`                  | Read: office. Change: owner                            |
-| GET, POST, PATCH    | `/admin/windows[/:id]`                        | Office                                                 |
-| PUT                 | `/admin/windows/:id/capacity/:date`           | Office                                                 |
-| GET                 | `/admin/window-slots?from&days`               | Office                                                 |
-| GET, POST, DELETE   | `/admin/closed-days[/:id]`                    | Office                                                 |
-| GET                 | `/admin/catalog`                              | Office                                                 |
-| POST                | `/admin/catalog/prices`                       | Owner                                                  |
-| GET, PATCH          | `/admin/settings`                             | Read: office. Change: owner                            |
-| GET                 | `/admin/audit-logs`                           | Office                                                 |
+| Method              | Path                                             | Who                                                    |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------ |
+| GET                 | `/health`                                        | Anyone                                                 |
+| POST                | `/auth/otp/request`                              | Anyone (same answer whether or not an account exists)  |
+| POST                | `/auth/otp/verify`                               | Anyone with the code; `app` = customer, staff or admin |
+| POST                | `/auth/admin/password/setup`                     | Office, first sign-in only (setup token)               |
+| POST                | `/auth/admin/password/change`                    | Office                                                 |
+| POST                | `/auth/staff/pin`                                | Delivery staff, after an SMS code on this phone        |
+| POST                | `/auth/staff/pin/sign-in`                        | Delivery staff on a phone with a PIN                   |
+| POST                | `/auth/refresh`, `/auth/sign-out`                | Any session                                            |
+| GET, PATCH          | `/me`                                            | Any signed-in user                                     |
+| GET, PUT            | `/customer/profile`                              | Customer                                               |
+| GET, POST           | `/customer/addresses`                            | Customer                                               |
+| PATCH, DELETE       | `/customer/addresses/:id`                        | Customer (delete archives)                             |
+| GET                 | `/service-areas`                                 | Any signed-in user                                     |
+| GET, POST, PATCH    | `/admin/service-areas[/:id]`                     | Office                                                 |
+| GET, POST, PATCH    | `/admin/customers[/:id]`                         | Office                                                 |
+| POST, PATCH, DELETE | `/admin/customers/:id/addresses[/:addressId]`    | Office                                                 |
+| GET, POST, PATCH    | `/admin/staff[/:userId]`                         | Office                                                 |
+| POST                | `/admin/staff/:userId/reset-pin`                 | Office                                                 |
+| GET, POST, PATCH    | `/admin/team[/:userId]`                          | Owner                                                  |
+| GET                 | `/customer/order-options?addressId`              | Customer (price, totals, bookable delivery times)      |
+| GET, POST           | `/customer/orders`                               | Customer (POST: 201 new, 200 same `clientRequestId`)   |
+| GET                 | `/customer/orders/:id`                           | Customer (own orders only)                             |
+| POST                | `/customer/orders/:id/cancel`                    | Customer, until out for delivery                       |
+| GET, POST           | `/admin/orders`                                  | Office (list by `date` or `customerId`, `status`, `q`) |
+| GET                 | `/admin/orders/:id`                              | Office                                                 |
+| POST                | `/admin/orders/:id/transition`                   | Office (accept; reject or cancel with a reason)        |
+| POST                | `/admin/orders/bulk-accept`                      | Office                                                 |
+| GET                 | `/admin/customers/:id/order-options`             | Office                                                 |
+| GET, PUT            | `/admin/customers/:id/price`                     | Read: office. Change: owner                            |
+| GET, POST, PATCH    | `/admin/windows[/:id]`                           | Office                                                 |
+| PUT                 | `/admin/windows/:id/capacity/:date`              | Office                                                 |
+| GET                 | `/admin/window-slots?from&days`                  | Office                                                 |
+| GET, POST, DELETE   | `/admin/closed-days[/:id]`                       | Office                                                 |
+| GET                 | `/admin/catalog`                                 | Office                                                 |
+| POST                | `/admin/catalog/prices`                          | Owner                                                  |
+| GET, PATCH          | `/admin/settings`                                | Read: office. Change: owner                            |
+| GET                 | `/staff/day?date`                                | Delivery staff (own route only)                        |
+| POST                | `/staff/trips/:id/start`, `/staff/trips/:id/end` | Delivery staff (load-out; day-end counts)              |
+| POST                | `/staff/orders/:id/deliver`                      | Delivery staff (same `clientActionId` = same result)   |
+| POST                | `/staff/orders/:id/not-delivered`                | Delivery staff                                         |
+| POST                | `/staff/attempts/:id/undo`                       | Delivery staff, within the undo time                   |
+| GET                 | `/customer/account`                              | Customer (cans held, deposit, amount due)              |
+| GET                 | `/admin/deliveries?date`                         | Office (routes, waiting, failed, days to check)        |
+| POST                | `/admin/deliveries/assign`, `/unassign`          | Office                                                 |
+| PUT                 | `/admin/trips/:id/sequence`                      | Office, before the route starts                        |
+| POST                | `/admin/trips/:id/move`                          | Office, before the route starts                        |
+| POST                | `/admin/trips/:id/reconcile`                     | Office (note needed if counts differ)                  |
+| POST                | `/admin/orders/:id/reschedule`                   | Office (failed orders)                                 |
+| GET                 | `/admin/customers/:id/ledgers`                   | Office                                                 |
+| GET, POST           | `/admin/stock`                                   | Office (POST: filled, bought, discarded, count)        |
+| GET                 | `/admin/audit-logs`                              | Office                                                 |
 
 POST and PATCH routes that create or change records accept an `Idempotency-Key` header. Office requests must send
 `X-WtrDrop-Client: admin`; the office refresh token is an httpOnly, SameSite=Strict cookie.

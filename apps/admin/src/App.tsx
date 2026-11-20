@@ -8,11 +8,21 @@ import { OrderDetailPage } from './pages/OrderDetailPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { StaffPage } from './pages/StaffPage';
+import { DeliveriesPage } from './pages/DeliveriesPage';
+import { StockPage } from './pages/StockPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SignInPage } from './pages/SignInPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
-const BUILT = new Set<string>(['/', '/orders', '/customers', '/staff', '/settings']);
+const BUILT = new Set<string>([
+  '/',
+  '/orders',
+  '/deliveries',
+  '/customers',
+  '/staff',
+  '/stock',
+  '/settings',
+]);
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -28,7 +38,9 @@ const router = createBrowserRouter([
       { path: 'orders/:id', element: <OrderDetailPage /> },
       { path: 'customers', element: <CustomersPage /> },
       { path: 'customers/:id', element: <CustomerDetailPage /> },
+      { path: 'deliveries', element: <DeliveriesPage /> },
       { path: 'staff', element: <StaffPage /> },
+      { path: 'stock', element: <StockPage /> },
       { path: 'settings', element: <SettingsPage /> },
       ...NAV_ITEMS.filter((i) => !BUILT.has(i.path)).map((i) => ({
         path: i.path.slice(1),

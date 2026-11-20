@@ -21,6 +21,7 @@ import { profileRoutes } from './modules/customers/profile.routes';
 import { adminPeopleRoutes } from './modules/people/people.routes';
 import { serviceAreaRoutes } from './modules/service-areas/service-areas.routes';
 import { orderingRoutes, type Clock } from './modules/ordering/ordering.routes';
+import { deliveryRoutes } from './modules/delivery/delivery.routes';
 
 export const API_VERSION = '0.1.0';
 
@@ -102,6 +103,7 @@ export function createApp({ env, db, logger, otpProvider, clock }: AppDeps): Exp
   v1.use(serviceAreaRoutes(db));
   v1.use(adminPeopleRoutes(db));
   v1.use(orderingRoutes(db, clock ?? (() => new Date())));
+  v1.use(deliveryRoutes(db, clock ?? (() => new Date())));
   app.use('/api/v1', v1);
 
   app.use(notFoundHandler);
