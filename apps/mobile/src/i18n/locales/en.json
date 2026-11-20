@@ -331,5 +331,37 @@
     "first": "Order water",
     "details": "See order",
     "detailsOrCancel": "See or cancel order"
+  },
+  "statement": {
+    "open": "See monthly statement",
+    "title": "Monthly statement",
+    "previous": "Previous month",
+    "next": "Next month",
+    "due": "{{amount}} due",
+    "advance": "Advance {{amount}}",
+    "nothingDue": "Nothing due",
+    "opening": "Start of month",
+    "charged": "Charged",
+    "paid": "Paid and credited",
+    "closing": "End of month",
+    "cansLine": "Cans delivered {{delivered}}, returned {{returned}}. Our cans with you at month end: {{closing}}.",
+    "noEntries": "Nothing was charged or paid this month.",
+    "cans_one": "{{count}} can",
+    "cans_other": "{{count}} cans",
+    "method": {
+      "cash": "Cash",
+      "upi": "UPI"
+    },
+    "entry": {
+      "delivery_charge": "Delivery",
+      "payment": "Payment",
+      "reversal": "Undone",
+      "opening": "Opening balance",
+      "adjustment": "Correction",
+      "deposit_refund": "Deposit refund, off the dues",
+      "notReceived": "Payment not received"
+    },
+    "previousShort": "Previous",
+    "nextShort": "Next"
   }
 }

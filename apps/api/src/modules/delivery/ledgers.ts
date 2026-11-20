@@ -6,9 +6,10 @@
  * updated in the same statement sequence, so the cache always equals the sum of the entries
  * (checked by tests). Entries are never edited: a mistake gets a reversing entry.
  */
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { DbOrTx } from '../../db/client';
 import {
+  accountEntryEnum,
   accountLedger,
   canLedger,
   customers,
@@ -134,7 +135,7 @@ export async function postDeposit(
 export async function postAccount(
   tx: DbOrTx,
   c: LockedCustomer,
-  entryType: 'delivery_charge' | 'payment' | 'reversal' | 'opening' | 'adjustment',
+  entryType: (typeof accountEntryEnum.enumValues)[number],
   deltaPaise: number,
   ref: EntryRef & { paymentId?: string | null },
 ) {
@@ -170,7 +171,13 @@ export async function reverseAttemptEntries(
   const cans = await tx
     .select()
     .from(canLedger)
-    .where(and(eq(canLedger.attemptId, attemptId), sql`${canLedger.entryType} <> 'reversal'`))
+    .where(
+      and(
+        eq(canLedger.attemptId, attemptId),
+        sql`${canLedger.entryType} <> 'reversal'`,
+        sql`not exists (select 1 from can_ledger r where r.reverses_entry_id = ${canLedger.id})`,
+      ),
+    )
     .orderBy(asc(canLedger.id));
   for (const e of cans)
     await postCans(tx, c, 'reversal', -e.delta, {
@@ -183,7 +190,11 @@ export async function reverseAttemptEntries(
     .select()
     .from(depositLedger)
     .where(
-      and(eq(depositLedger.attemptId, attemptId), sql`${depositLedger.entryType} <> 'reversal'`),
+      and(
+        eq(depositLedger.attemptId, attemptId),
+        sql`${depositLedger.entryType} <> 'reversal'`,
+        sql`not exists (select 1 from deposit_ledger r where r.reverses_entry_id = ${depositLedger.id})`,
+      ),
     )
     .orderBy(asc(depositLedger.id));
   for (const e of deposits)
@@ -197,7 +208,12 @@ export async function reverseAttemptEntries(
     .select()
     .from(accountLedger)
     .where(
-      and(eq(accountLedger.attemptId, attemptId), sql`${accountLedger.entryType} <> 'reversal'`),
+      and(
+        eq(accountLedger.attemptId, attemptId),
+        sql`${accountLedger.entryType} <> 'reversal'`,
+        // A payment the office already marked "not received" is not reversed twice.
+        sql`not exists (select 1 from account_ledger r where r.reverses_entry_id = ${accountLedger.id})`,
+      ),
     )
     .orderBy(asc(accountLedger.id));
   for (const e of money)
@@ -210,8 +226,8 @@ export async function reverseAttemptEntries(
     });
   await tx
     .update(payments)
-    .set({ reversedAt: new Date() })
-    .where(eq(payments.attemptId, attemptId));
+    .set({ reversedAt: new Date(), reversedBy: ref.actorUserId, reverseReason: ref.reason })
+    .where(and(eq(payments.attemptId, attemptId), isNull(payments.reversedAt)));
 }
 
 export type Place = 'depot' | 'trip' | 'customer' | 'damaged' | 'outside';

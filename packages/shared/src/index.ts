@@ -6,3 +6,4 @@ export * from './schemas';
 export * from './people';
 export * from './ordering';
 export * from './delivery';
+export * from './payments';

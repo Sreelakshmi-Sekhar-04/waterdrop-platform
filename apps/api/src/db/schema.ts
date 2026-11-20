@@ -32,6 +32,7 @@ import {
   ORDER_CHANNELS,
   ORDER_STATUSES,
   PAYMENT_METHODS,
+  REFUND_METHODS,
   ROLES,
   TRIP_STATUSES,
 } from '@wtrdrop/shared';
@@ -70,6 +71,7 @@ export const accountEntryEnum = pgEnum('account_entry_type', [
   'reversal',
   'opening',
   'adjustment',
+  'deposit_refund',
 ]);
 export const stockPlaceEnum = pgEnum('stock_place', [
   'depot',
@@ -79,6 +81,7 @@ export const stockPlaceEnum = pgEnum('stock_place', [
   'outside',
 ]);
 export const canStateEnum = pgEnum('can_state', ['full', 'empty', 'damaged']);
+export const refundMethodEnum = pgEnum('refund_method', REFUND_METHODS);
 
 /** A water supplier (tenant). One row at launch; the design allows more later. */
 export const suppliers = pgTable('suppliers', {
@@ -781,13 +784,27 @@ export const payments = pgTable(
       .references(() => users.id, { onDelete: 'restrict' }),
     tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'restrict' }),
     attemptId: uuid('attempt_id').references(() => deliveryAttempts.id, { onDelete: 'restrict' }),
-    /** Set when an undo reverses it; the row itself stays. */
+    /** Set when an undo or "not received" reverses it; the row itself stays. */
     reversedAt: timestamp('reversed_at', { withTimezone: true }),
+    reversedBy: uuid('reversed_by').references(() => users.id, { onDelete: 'restrict' }),
+    reverseReason: text('reverse_reason'),
+    /** The day the money was paid (IST). Delivery payments: the delivery day. */
+    paidOn: date('paid_on', { mode: 'string' }),
+    /** Office checked it against the bank statement (UPI) or the cash box (Phase 6). */
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
+    verifiedBy: uuid('verified_by').references(() => users.id, { onDelete: 'restrict' }),
+    note: text('note'),
+    /** Office entries: a retry with the same id returns the first payment (scenario 8). */
+    clientRequestId: uuid('client_request_id'),
     createdAt: createdAt(),
   },
   (t) => [
     index('payments_customer_idx').on(t.customerId, t.createdAt),
     index('payments_trip_idx').on(t.tripId),
+    index('payments_paid_on_idx').on(t.supplierId, t.paidOn),
+    uniqueIndex('payments_client_request_uq')
+      .on(t.supplierId, t.clientRequestId)
+      .where(sql`client_request_id is not null`),
     check('payments_amount_ck', sql`amount_paise > 0 and method <> 'later'`),
   ],
 );
@@ -821,5 +838,36 @@ export const stockMovements = pgTable(
     index('stock_movements_supplier_idx').on(t.supplierId, t.at),
     index('stock_movements_trip_idx').on(t.tripId),
     check('stock_movements_qty_ck', sql`qty > 0`),
+  ],
+);
+
+/**
+ * Deposit given back for returned cans (M-05, M-22). The deposit ledger has the matching
+ * `refund` entry; `adjust` means the money paid off dues instead of being handed over.
+ */
+export const depositRefunds = pgTable(
+  'deposit_refunds',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'restrict' }),
+    cans: integer('cans').notNull(),
+    amountPaise: integer('amount_paise').notNull(),
+    method: refundMethodEnum('method').notNull(),
+    reason: text('reason'),
+    actorUserId: uuid('actor_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    clientRequestId: uuid('client_request_id').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('deposit_refunds_client_request_uq').on(t.supplierId, t.clientRequestId),
+    index('deposit_refunds_customer_idx').on(t.customerId, t.createdAt),
+    check('deposit_refunds_amount_ck', sql`amount_paise > 0 and cans > 0`),
   ],
 );

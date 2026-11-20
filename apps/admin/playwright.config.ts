@@ -25,6 +25,9 @@ export default defineConfig({
         E2E_DB_NAME: 'wtrdrop_e2e_admin',
         OTP_DEV_OUTBOX: OUTBOX,
         CORS_ORIGINS: 'http://localhost:4173',
+        // Two browsers click far faster than people, all from one address; the limit itself is
+        // tested in the API suite.
+        RATE_LIMIT_PER_MINUTE: '3000',
       },
     },
     {

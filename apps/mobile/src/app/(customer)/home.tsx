@@ -116,6 +116,14 @@ export default function CustomerHome() {
           </Card>
         </View>
       ) : null}
+      {acc ? (
+        <Button
+          variant="secondary"
+          compact
+          label={t('statement.open')}
+          onPress={() => router.push('/(customer)/statement')}
+        />
+      ) : null}
 
       {open.map((x) => {
         const look = STATUS_LOOK[x.status];

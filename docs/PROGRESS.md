@@ -6,11 +6,11 @@ Read this file first at the start of every Claude Code session. Update it at the
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 5: Delivery and ledgers** (complete, waiting for review) |
-| Phase status | Phase 4 approved 20 Nov 2026 ("start Phase 5"). Phase 5 delivered 20 Nov on branch `phase-5-delivery` (built on `phase-4-ordering`). **Waiting for Sreelakshmi's review** before Phase 6. |
-| Next step | Review the Phase 5 report below, then Phase 6 (payments: UPI checking, dues, credit limits, deposit refunds, corrections and opening balances). |
-| Coding started? | Yes. Do not start Phase 6 until Phase 5 is reviewed. |
-| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-5-delivery`. |
+| Current phase | **Phase 6: Payments and corrections** (complete, waiting for review) |
+| Phase status | Phase 5 approved 20 Nov 2026 ("start Phase 6"). Phase 6 delivered 20 Nov on branch `phase-6-payments` (built on `phase-5-delivery`). **Waiting for Sreelakshmi's review** before Phase 7. |
+| Next step | Review the Phase 6 report below, then Phase 7 (reports, the real Today page, notifications and reminders). |
+| Coding started? | Yes. Do not start Phase 7 until Phase 6 is reviewed. |
+| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-6-payments`. |
 | Docs location | Repo `docs/` is the source of truth from Phase 1. Project files `wtrdrop/docs/` hold a copy. |
 
 ## Key references
@@ -311,3 +311,54 @@ Defects found and fixed during Phase 5: (a) after a delivery the phone stacked a
 **11. Deviations from the original requirements** — none. The details left open by the approved decisions are recorded in ADR 0004 and the change log.
 
 **12. Recommended next step** — Phase 6: payments. UPI and cash checking at day end, dues list with reminders, credit limits per customer, deposit refunds when cans come back, opening balances for existing customers, and office corrections with reasons.
+
+### Phase 6: Payments and corrections (20 Nov 2026)
+
+**1. What was completed**
+- **Payments page** (portal), three tabs: **Dues** (who owes, how much, owing since, last paid, over limit, Record payment in one tap); **Payments by day** (cash, UPI and deposit refund totals, every payment with who collected it, "Not received" with a reason); **UPI to check** (Received after seeing it in the bank, or Not received).
+- **Customer page** (portal): Record payment (cash or UPI, "Full due" in one tap), Refund deposit (only for cans that came back; cash, UPI or off the dues), Correct balances (type what is true, with a reason), credit limit (owner changes it; others see it), and Monthly statement.
+- **Monthly statement** (D-11): a printable A4 page for the office (previous and next month, Print), and a "See monthly statement" screen in the customer app (24 months back, no office notes).
+- **Opening balances** (M-04), owner only, on the Customers page: CSV file or paste, sample file, line errors shown before anything is sent, a server preview that saves nothing, then Import. Customers who already have entries are skipped.
+- Scenario 8 (duplicate payment): five identical payment requests at once record one payment.
+
+**2. Files created or changed**
+- Shared: `packages/shared/src/payments.ts` (+ 7 tests): payment, refund, correction and opening schemas, the refund formula, the CSV reader, month helpers.
+- API: `src/db/schema.ts`, migration `0005_phase6_payments.sql` (payment check, reverse and paid-on columns with back-fill, `deposit_refunds` table, `deposit_refund` account entry), `src/modules/payments/{payments.service,payments.routes}.ts`, `delivery/{ledgers,delivery.service}.ts`, `app.ts`, `test/payments.test.ts` (12 tests).
+- Admin: `src/pages/{Payments,Statement}Page.tsx`, `src/components/{MoneyDialogs,OpeningImportDialog}.tsx`, `CustomerLedgers.tsx`, `CustomerDetailPage.tsx`, `CustomersPage.tsx`, `App.tsx`, `styles.css` (statement and print), locales, `e2e/portal.spec.ts`, `playwright.config.ts`.
+- Mobile: `(customer)/statement.tsx`, `(customer)/home.tsx`, `components/RoleGate.tsx`, locales, `e2e/delivery.spec.ts`.
+- Docs: `docs/adr/0005-payments-and-corrections.md`, README API table, change log, this report.
+
+**3. Architecture and design decisions** — see ADR 0005. In short: money only changes through new ledger entries with a reason (never edits); office payments carry a request id so they are saved once; UPI waits for a bank check; refunds follow the cans that came back; corrections and opening balances also move stock so the can pool adds up; the statement is read from the same ledgers as everything else.
+
+**4. APIs and database changes**
+- 11 new endpoints (README table): customer statement (1), office payments, verify, not received, dues, customer payments, credit limit, deposit refund, corrections, statement, opening balances (10).
+- Database: `payments` gains paid-on date, check (verified) and reverse details, note and request id (unique per supplier); new `deposit_refunds` table; new `refund_method` enum and `deposit_refund` account entry type.
+
+**5. Tests executed** (all run on 20 Nov 2026 in the development container, PostgreSQL 16)
+- `pnpm lint`, `pnpm typecheck` (all packages), `prettier --check`, `pnpm check:i18n` (admin 667 texts, mobile 315).
+- `pnpm test`: design tokens 12, shared 54 (7 new), API 123 in 9 files against a real database (12 new: scenario 8 with 5 parallel requests; future date refused; roles and supplier isolation; UPI check, verify and not received; a delivery payment undone by the office and then by the delivery person is not reversed twice; dues and owner-only credit limit; opening balance preview, import and second import refused; deposit refund off the dues; corrections with stock; statement for office and customer; office pages refused to customers and staff). Every test checks that stored balances equal the ledger entries.
+- Admin Playwright: 25 scenarios × desktop and phone = 50, against the real API. New: UPI payment checked in the bank, delivery cash marked not received (reason required), then paid from the Dues list; cans corrected (reason required), deposit refunded off the dues, credit limit (owner changes it, office cannot), statement for this and last month; opening balance CSV with a bad line, preview and import (owner only). axe WCAG 2 A/AA and no horizontal scroll on each.
+- Mobile Playwright: 19 tests at Pixel 7 size against the real API; the customer test now opens the monthly statement (₹380 delivery, ₹380 paid, nothing due) and the previous month.
+- `expo export --platform android` bundle build.
+
+**6. Actual test results** — all passed: 189 unit/integration tests, 50 admin browser tests, 19 mobile browser tests, translation check, Android bundle.
+
+Defects found and fixed during Phase 6: (a) a deposit refund taken off the dues showed as a plain "Correction" on the statement; it is now its own entry, "Deposit refund, off the dues". (b) A payment marked not received showed as "Undone · 1 can" on the statement; it now says "Payment not received". (c) The statement screen in the app showed the "Preview screen" banner although it is real. (d) The refund list used the server clock instead of the request time. (e) Two browsers testing at once hit the API's request limit; the test server now allows more (the limit itself is still tested in the API suite).
+
+**7. Known defects and limitations**
+- No reminders are sent to customers who owe (no SMS or push yet): Phase 7.
+- No payment gateway (D-19, later). UPI is checked by hand against the bank statement; there is no bank file import.
+- Opening-balance line errors from the CSV reader are in English only.
+- The statement is printed from the browser (Print → Save as PDF); there is no PDF file made by the server and no GST invoice.
+- Malayalam texts are draft translations and need a native speaker's review. All prices and numbers are DEMO values. Real SMS is still not connected.
+- The branch has not been pushed (GitHub App still missing); a git bundle is in project files.
+
+**8. Security considerations** — only the owner can import opening balances and change credit limits (tested); office pages answer 403 to customers and delivery staff, and another supplier's customers answer "not found" (tested). Customers see only their own statement, without the office's notes or phone numbers. Every payment, check, not received, refund, credit limit change, correction and import is audited with before and after. Money cannot be edited or deleted, even by the app's database user. Office lists show only the last 4 digits of phones.
+
+**9. Pending decisions** — none blocking. Before launch: real credit limits for customers who may pay later, and the opening balance file (each existing customer's cans, deposit and dues).
+
+**10. Recommendations** — prepare the opening balance file from the current notebook or spreadsheet and import it on the go-live day, right after counting the depot. Check UPI daily from the "UPI to check" tab so the list stays short.
+
+**11. Deviations from the original requirements** — none. Dues reminders were listed with Phase 6 in the last report; they need SMS, so they move to Phase 7 notifications (recorded in the change log).
+
+**12. Recommended next step** — Phase 7: reports (sales, collections, dues ageing, cans), the real Today page, and customer notifications (order updates and dues reminders).

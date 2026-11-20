@@ -512,6 +512,151 @@ test('Customer: cans, deposit and money ledgers after the delivery', async () =>
   await noHorizontalScroll(page);
 });
 
+test('Payments: UPI checked in the bank, cash marked not received, then paid from Dues', async () => {
+  const mary = `Mary Joseph ${tag}`;
+  await page.goto(`/customers/${maryId}`);
+  await page.getByRole('button', { name: 'Record payment' }).click();
+  const pay = page.getByRole('dialog', { name: 'Record payment' });
+  await pay.getByRole('button', { name: 'Full due (₹150)' }).click();
+  await pay.getByLabel('UPI', { exact: true }).check();
+  await pay.getByLabel('UPI reference (optional)').fill(`UTR${tag}1234`);
+  await axe();
+  await pay.getByRole('button', { name: 'Save payment of ₹150' }).click();
+  await expect(page.getByText(`₹150 saved for ${mary}.`)).toBeVisible();
+  await expect(page.getByTestId('customer-balances')).toContainText('Amount due₹0');
+
+  await nav('Payments');
+  await page.getByRole('button', { name: 'UPI to check' }).click();
+  await page.getByRole('button', { name: `Received from ${mary}`, exact: true }).click();
+  await expect(page.getByText(`₹150 from ${mary} checked in the bank.`)).toBeVisible();
+
+  // Asha's ₹40 cash never reached the office: it goes back on Mary's account, still listed.
+  await page.getByRole('button', { name: 'Payments by day' }).click();
+  await expect(page.getByTestId('day-totals')).toContainText('UPI');
+  const cash = page
+    .getByRole('row')
+    .filter({ hasText: mary })
+    .filter({ hasText: 'collected by Asha' });
+  await cash.getByRole('button', { name: `Not received from ${mary}` }).click();
+  const rev = page.getByRole('dialog', { name: 'Not received' });
+  await rev.getByRole('button', { name: 'Mark not received' }).click();
+  await expect(rev.getByText('Write a short reason.')).toBeVisible();
+  await rev.getByLabel('Reason').fill('Cash was not in the day bag');
+  await axe();
+  await rev.getByRole('button', { name: 'Mark not received' }).click();
+  await expect(page.getByText(`₹40 from ${mary} marked not received.`)).toBeVisible();
+  await expect(cash).toContainText('Cash was not in the day bag');
+  await shot('admin-payments-day');
+
+  await page.getByRole('button', { name: 'Dues', exact: true }).click();
+  const due = page
+    .getByRole('region', { name: 'Dues', exact: true })
+    .getByRole('row')
+    .filter({ hasText: mary });
+  await expect(due).toContainText('₹40');
+  await shot('admin-dues');
+  await axe();
+  await due.getByRole('button', { name: `Record payment for ${mary}` }).click();
+  const again = page.getByRole('dialog', { name: 'Record payment' });
+  await again.getByRole('button', { name: 'Full due (₹40)' }).click();
+  await again.getByRole('button', { name: 'Save payment of ₹40' }).click();
+  await expect(page.getByText(`₹40 saved for ${mary}.`)).toBeVisible();
+  await expect(due).toHaveCount(0);
+  await noHorizontalScroll(page);
+});
+
+test('Customer: correct the cans, refund the deposit, credit limit and the monthly statement', async () => {
+  await page.goto(`/customers/${maryId}`);
+  const balances = page.getByTestId('customer-balances');
+  await expect(balances).toContainText('Amount due₹0');
+
+  // Mary still has the can, so there is no deposit to give back yet.
+  await page.getByRole('button', { name: 'Refund deposit' }).click();
+  const none = page.getByRole('dialog', { name: 'Refund deposit' });
+  await expect(none.getByRole('alert')).toContainText('There is no deposit to give back');
+  await none.getByRole('button', { name: 'Cancel' }).click();
+
+  await page.getByRole('button', { name: 'Correct balances' }).click();
+  const fix = page.getByRole('dialog', { name: 'Correct balances' });
+  await fix.getByLabel('Our cans with them').fill('0');
+  await fix.getByRole('button', { name: 'Save correction' }).click();
+  await expect(fix.getByText('Write a short reason.')).toBeVisible();
+  await fix.getByLabel('Reason').fill('Mary brought the can back to the depot');
+  await axe();
+  await fix.getByRole('button', { name: 'Save correction' }).click();
+  await expect(page.getByText('Balances corrected.')).toBeVisible();
+  await expect(balances).toContainText('Our cans with them0');
+
+  await page.getByRole('button', { name: 'Refund deposit' }).click();
+  const refund = page.getByRole('dialog', { name: 'Refund deposit' });
+  await expect(refund.locator('.field-hint')).toHaveText('Refund ₹150');
+  await refund.getByLabel('Take it off the dues').check();
+  await axe();
+  await refund.getByRole('button', { name: 'Refund ₹150' }).click();
+  await expect(page.getByText('₹150 for 1 can taken off the dues.')).toBeVisible();
+  await expect(balances).toContainText('Paid in advance₹150');
+
+  if (me.owner) {
+    await page.getByRole('button', { name: 'Change credit limit' }).click();
+    const limit = page.getByRole('dialog', { name: 'Credit limit' });
+    await limit.getByLabel('Credit limit (₹)').fill('500');
+    await limit.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Credit limit set to ₹500.')).toBeVisible();
+    await expect(page.getByTestId('credit-limit')).toHaveText('₹500');
+  } else {
+    await expect(page.getByText('Only the owner can change this.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Change credit limit' })).toHaveCount(0);
+  }
+  await shot('admin-customer-money');
+
+  await page.getByRole('link', { name: 'Monthly statement' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Monthly statement');
+  const sums = page.getByTestId('statement-sums');
+  await expect(sums).toContainText('End of month');
+  await expect(sums).toContainText('Advance ₹150');
+  await expect(page.getByRole('row', { name: /Deposit refund, off the dues/ })).toContainText(
+    '−₹150',
+  );
+  await expect(page.getByRole('button', { name: 'Print' })).toBeEnabled();
+  await shot('admin-statement');
+  await axe();
+  await noHorizontalScroll(page);
+  await page.getByRole('button', { name: 'Previous month' }).click();
+  await expect(sums).toContainText('Start of month');
+  await expect(page.getByText('Nothing was charged or paid this month.')).toBeVisible();
+});
+
+test('Customers: the owner imports opening balances from a CSV', async () => {
+  await nav('Customers');
+  if (!me.owner) {
+    await expect(page.getByRole('button', { name: 'Import opening balances' })).toHaveCount(0);
+    return;
+  }
+  await page.getByRole('button', { name: 'Import opening balances' }).click();
+  const dlg = page.getByRole('dialog', { name: 'Opening balances' });
+  const csv = (cans: string) =>
+    [
+      'phone,name,cans_held,deposit_rupees,deposit_cans,due_rupees',
+      `9847555101,Old Customer ${tag} One,${cans},300,2,450`,
+      `9847555102,Old Customer ${tag} Two,1,150,1,0`,
+    ].join('\n');
+  await dlg.getByLabel('Or paste the lines here').fill(csv('two'));
+  await dlg.getByRole('button', { name: 'Check' }).click();
+  await expect(dlg.getByText('Fix 1 line and check again.')).toBeVisible();
+  await dlg.getByLabel('Or paste the lines here').fill(csv('2'));
+  await dlg.getByRole('button', { name: 'Check' }).click();
+  await expect(dlg.getByTestId('opening-summary')).toHaveText(
+    '2 new customers, 0 existing customers, 0 lines that will be skipped.',
+  );
+  await shot('admin-opening-import');
+  await axe();
+  await dlg.getByRole('button', { name: 'Import 2 customers' }).click();
+  await expect(page.getByText('Opening balances saved for 2 customers.')).toBeVisible();
+  await page.getByLabel('Search customers').fill(`Old Customer ${tag} One`);
+  await page.getByRole('link', { name: `Old Customer ${tag} One` }).click();
+  await expect(page.getByTestId('customer-balances')).toContainText('₹450');
+});
+
 test('Settings: only the owner manages office accounts', async () => {
   await nav('Settings');
   const team = page.getByRole('region', { name: 'Office accounts' });

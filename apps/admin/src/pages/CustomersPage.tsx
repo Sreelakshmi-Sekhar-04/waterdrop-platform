@@ -12,6 +12,8 @@ import {
 } from '@wtrdrop/shared';
 import { call, ApiRequestError } from '../lib/api';
 import { errorText } from '../lib/errors';
+import { isOwner, useAuth } from '../lib/auth';
+import { OpeningImportDialog } from '../components/OpeningImportDialog';
 import { Dialog } from '../components/Dialog';
 import { LiveMessage, PageHeader, SearchField, TableWrap, maskPhone } from '../components/ui';
 
@@ -30,6 +32,9 @@ export function CustomersPage() {
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const { me } = useAuth();
   const list = useQuery({
     queryKey: ['customers', q],
     queryFn: async () =>
@@ -53,6 +58,15 @@ export function CustomersPage() {
             <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
               {t('customers.add')}
             </button>
+            {isOwner(me) ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setImporting(true)}
+              >
+                {t('opening.open')}
+              </button>
+            ) : null}
           </>
         }
       />
@@ -114,7 +128,13 @@ export function CustomersPage() {
           )}
         </>
       ) : null}
+      <LiveMessage text={message} tone="success" />
       <AddCustomerDialog open={adding} onClose={() => setAdding(false)} />
+      <OpeningImportDialog
+        open={importing}
+        onClose={() => setImporting(false)}
+        onDone={setMessage}
+      />
     </div>
   );
 }

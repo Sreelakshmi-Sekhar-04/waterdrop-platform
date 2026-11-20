@@ -191,7 +191,9 @@ test('the office sees the ledgers, the stock and the day to check (scenarios 5 a
   expect(stock.vanFull + stock.vanEmpty).toBe(0);
 });
 
-test('the customer sees the cans they hold and that nothing is due', async ({ browser }, info) => {
+test('the customer sees the cans they hold, that nothing is due, and the statement', async ({
+  browser,
+}, info) => {
   const { defaultBrowserType: _ignored, ...device } = info.project.use as Record<string, unknown>;
   const ctx = await browser.newContext(device);
   const p = await ctx.newPage();
@@ -210,5 +212,25 @@ test('the customer sees the cans they hold and that nothing is due', async ({ br
   await expect(p.getByTestId('cans-held')).toHaveText('2');
   await expect(p.getByText('All paid, thank you')).toBeVisible();
   if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/customer-home.png` });
+
+  // D-11: this month's statement, from the same ledgers the office sees.
+  await p.getByRole('button', { name: 'See monthly statement' }).click();
+  await expect(p.getByRole('heading', { name: 'Monthly statement' })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(p.getByTestId('statement-closing')).toHaveText('Nothing due');
+  await expect(p.getByText('Delivery', { exact: true })).toBeVisible();
+  await expect(p.getByText('+₹380')).toBeVisible();
+  await expect(p.getByText('−₹380')).toBeVisible();
+  const results = await new AxeBuilder({ page: p })
+    .withTags(['wcag2a', 'wcag2aa'])
+    .disableRules(['meta-viewport'])
+    .analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
+  await fitsPhoneWidth(p);
+  if (process.env.SHOTS)
+    await p.screenshot({ path: `${process.env.SHOTS}/customer-statement.png` });
+  await p.getByRole('button', { name: 'Previous month' }).click();
+  await expect(p.getByText('Nothing was charged or paid this month.')).toBeVisible();
   await ctx.close();
 });

@@ -136,6 +136,17 @@ All paths start with `/api/v1`. "Office" means the admin and owner roles. Every 
 | POST                | `/admin/orders/:id/reschedule`                   | Office (failed orders)                                 |
 | GET                 | `/admin/customers/:id/ledgers`                   | Office                                                 |
 | GET, POST           | `/admin/stock`                                   | Office (POST: filled, bought, discarded, count)        |
+| GET                 | `/customer/statement?month`                      | Customer (own statement, last 24 months)               |
+| GET                 | `/admin/payments?from&to&toCheck=1`              | Office (payments and refunds by day; UPI to check)     |
+| POST                | `/admin/payments/:id/verify`                     | Office (UPI seen in the bank)                          |
+| POST                | `/admin/payments/:id/reverse`                    | Office (not received, reason needed)                   |
+| GET                 | `/admin/dues`                                    | Office                                                 |
+| GET, POST           | `/admin/customers/:id/payments`                  | Office (same `clientRequestId` = one payment)          |
+| PUT                 | `/admin/customers/:id/credit-limit`              | Owner                                                  |
+| POST                | `/admin/customers/:id/deposit-refund`            | Office                                                 |
+| POST                | `/admin/customers/:id/corrections`               | Office (reason needed)                                 |
+| GET                 | `/admin/customers/:id/statement?month`           | Office                                                 |
+| POST                | `/admin/opening-balances`                        | Owner (`dryRun: true` saves nothing)                   |
 | GET                 | `/admin/audit-logs`                              | Office                                                 |
 
 POST and PATCH routes that create or change records accept an `Idempotency-Key` header. Office requests must send

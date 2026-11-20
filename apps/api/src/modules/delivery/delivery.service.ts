@@ -13,6 +13,7 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import {
   deliveryMoney,
+  istDate,
   type DeliverInput,
   type EndTripInput,
   type NotDeliveredInput,
@@ -333,6 +334,7 @@ export async function deliver(
           collectedBy: ctx.userId,
           tripId: t.id,
           attemptId: a!.id,
+          paidOn: istDate(new Date(input.at)),
         })
         .returning({ id: payments.id });
       await postAccount(tx, c, 'payment', -paid, { ...ref, paymentId: p!.id });

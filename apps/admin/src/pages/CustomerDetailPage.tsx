@@ -193,7 +193,7 @@ export function CustomerDetailPage() {
 
       <CustomerOrders customerId={c.id} active={c.status === 'active' && c.addresses.length > 0} />
 
-      <CustomerLedgers customerId={c.id} />
+      <CustomerLedgers customerId={c.id} customerName={c.name ?? t('customers.noName')} />
 
       <AddAddressDialog
         customerId={c.id}

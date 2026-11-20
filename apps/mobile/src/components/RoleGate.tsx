@@ -19,6 +19,7 @@ const LIVE_SCREENS = new Set([
   '/deliver',
   '/not-delivered',
   '/day-end',
+  '/statement',
 ]);
 
 /**

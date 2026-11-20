@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatINR } from '@wtrdrop/shared';
 import { call } from '../lib/api';
+import { isOwner, useAuth } from '../lib/auth';
 import { errorText } from '../lib/errors';
-import { Chip, TableWrap } from './ui';
+import { Chip, LiveMessage, TableWrap } from './ui';
+import {
+  CorrectionDialog,
+  CreditLimitDialog,
+  RecordPaymentDialog,
+  RefundDialog,
+} from './MoneyDialogs';
 
 interface Ledgers {
   balances: {
@@ -47,14 +54,35 @@ interface Ledgers {
 }
 
 type Tab = 'cans' | 'deposit' | 'money';
+type Open = 'pay' | 'refund' | 'correct' | 'limit' | null;
 
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 const signedINR = (p: number) => (p > 0 ? `+${formatINR(p)}` : `−${formatINR(-p)}`);
 
-/** A customer's three ledgers (Phase 5): balances on top, every entry below. Entries are never edited. */
-export function CustomerLedgers({ customerId }: { customerId: string }) {
+/**
+ * A customer's three ledgers (Phase 5): balances on top, every entry below. Entries are never
+ * edited; Phase 6 adds the office actions that post new entries (payment, refund, correction).
+ */
+export function CustomerLedgers({
+  customerId,
+  customerName,
+}: {
+  customerId: string;
+  customerName: string;
+}) {
   const { t, i18n } = useTranslation();
+  const { me } = useAuth();
+  const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('cans');
+  const [open, setOpen] = useState<Open>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const saved = (text: string) => {
+    setMessage(text);
+    void qc.invalidateQueries({ queryKey: ['customer-ledgers', customerId] });
+    void qc.invalidateQueries({ queryKey: ['customer-payments', customerId] });
+    void qc.invalidateQueries({ queryKey: ['dues'] });
+    void qc.invalidateQueries({ queryKey: ['payments'] });
+  };
   const q = useQuery({
     queryKey: ['customer-ledgers', customerId],
     queryFn: () => call<Ledgers>(`/admin/customers/${customerId}/ledgers`),
@@ -76,7 +104,41 @@ export function CustomerLedgers({ customerId }: { customerId: string }) {
 
   return (
     <section aria-labelledby="ledger-h">
-      <h2 id="ledger-h">{t('ledger.title')}</h2>
+      <div className="section-head">
+        <h2 id="ledger-h">{t('ledger.title')}</h2>
+        {b ? (
+          <div className="row-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-compact"
+              onClick={() => setOpen('pay')}
+            >
+              {t('money.recordPayment')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-compact"
+              onClick={() => setOpen('refund')}
+            >
+              {t('money.refundDeposit')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-compact"
+              onClick={() => setOpen('correct')}
+            >
+              {t('money.correct')}
+            </button>
+            <Link
+              className="btn btn-secondary btn-compact"
+              to={`/customers/${customerId}/statement`}
+            >
+              {t('statement.open')}
+            </Link>
+          </div>
+        ) : null}
+      </div>
+      <LiveMessage text={message} tone="success" />
       {q.isError ? (
         <div className="card empty" role="alert">
           {errorText(t, q.error)}
@@ -96,7 +158,7 @@ export function CustomerLedgers({ customerId }: { customerId: string }) {
               <dd className="stat-note">{t('ledger.cover', { count: b.depositCoverCans })}</dd>
             </div>
             <div className="card stat">
-              <dt>{owes ? t('ledger.due') : t('ledger.advance')}</dt>
+              <dt>{b.balancePaise < 0 ? t('ledger.advance') : t('ledger.due')}</dt>
               <dd className={`stat-value${owes ? ' tone-warning' : ''}`}>
                 {formatINR(Math.abs(b.balancePaise))}
               </dd>
@@ -109,6 +171,26 @@ export function CustomerLedgers({ customerId }: { customerId: string }) {
                   </Chip>
                 </dd>
               ) : null}
+            </div>
+            <div className="card stat">
+              <dt>{t('money.creditLimit')}</dt>
+              <dd className="stat-value" data-testid="credit-limit">
+                {formatINR(b.creditLimitPaise)}
+              </dd>
+              {isOwner(me) ? (
+                <dd>
+                  <button
+                    type="button"
+                    className="btn btn-link"
+                    onClick={() => setOpen('limit')}
+                    aria-label={t('money.changeLimit')}
+                  >
+                    {t('common.edit')}
+                  </button>
+                </dd>
+              ) : (
+                <dd className="stat-note">{t('money.ownerSetsLimit')}</dd>
+              )}
             </div>
           </dl>
 
@@ -190,6 +272,35 @@ export function CustomerLedgers({ customerId }: { customerId: string }) {
             </TableWrap>
           )}
           <p className="field-hint">{t('ledger.note')}</p>
+          <RecordPaymentDialog
+            open={open === 'pay'}
+            customerId={customerId}
+            customerName={customerName}
+            duePaise={b.balancePaise}
+            onClose={() => setOpen(null)}
+            onSaved={saved}
+          />
+          <RefundDialog
+            open={open === 'refund'}
+            customerId={customerId}
+            balances={b}
+            onClose={() => setOpen(null)}
+            onSaved={saved}
+          />
+          <CorrectionDialog
+            open={open === 'correct'}
+            customerId={customerId}
+            balances={b}
+            onClose={() => setOpen(null)}
+            onSaved={saved}
+          />
+          <CreditLimitDialog
+            open={open === 'limit'}
+            customerId={customerId}
+            current={b.creditLimitPaise}
+            onClose={() => setOpen(null)}
+            onSaved={saved}
+          />
         </>
       ) : null}
     </section>
