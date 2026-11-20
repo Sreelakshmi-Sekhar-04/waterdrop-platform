@@ -76,12 +76,7 @@
     "helpTitle": "Help",
     "helpBody": "We usually answer within a few minutes during delivery hours.",
     "callUs": "Call us",
-    "whatsappUs": "WhatsApp us",
-    "commonProblems": "Common problems",
-    "problemCount": "Can count is wrong",
-    "problemQuality": "Water quality or damaged can",
-    "problemLate": "Delivery is late",
-    "problemPayment": "Payment question"
+    "whatsappUs": "WhatsApp us"
   },
   "status": {
     "PLACED": "Placed",
@@ -363,5 +358,38 @@
     },
     "previousShort": "Previous",
     "nextShort": "Next"
+  },
+  "help": {
+    "category": {
+      "CAN_COUNT": "Can count is wrong",
+      "WATER_QUALITY": "Water quality or damaged can",
+      "LATE": "Delivery is late",
+      "PAYMENT": "Payment question",
+      "OTHER": "Something else"
+    },
+    "noPhone": "The business has not added a phone number yet. Report a problem below and the office will reply here.",
+    "whatProblem": "What is the problem?",
+    "whichOrder": "Which order?",
+    "noOrder": "Not about one order",
+    "tellUs": "Tell us what happened",
+    "tellUsOptional": "Anything to add? (optional)",
+    "writeMore": "Write a few words about the problem.",
+    "send": "Send to the office",
+    "sent": "Sent. The office will reply here and in Messages.",
+    "mine": "Your reports",
+    "open": "Waiting for the office",
+    "resolved": "Resolved",
+    "answer": "Office: {{text}}"
+  },
+  "messages": {
+    "title": "Messages",
+    "open": "Messages",
+    "openNew_one": "Messages · {{count}} new",
+    "openNew_other": "Messages · {{count}} new",
+    "openNewLong_one": "Messages, {{count}} new message",
+    "openNewLong_other": "Messages, {{count}} new messages",
+    "none": "No messages yet. Delivery updates and answers from the office will appear here.",
+    "new": "New",
+    "openOrder": "See the order"
   }
 }

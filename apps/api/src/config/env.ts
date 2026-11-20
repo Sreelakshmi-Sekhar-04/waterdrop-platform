@@ -35,6 +35,15 @@ const envSchema = z.object({
   MSG91_AUTH_KEY: z.string().optional(),
   MSG91_TEMPLATE_ID: z.string().optional(),
   MSG91_BASE_URL: z.string().url().default('https://control.msg91.com'),
+  /**
+   * How messages reach customers' phones (Phase 7). The app always lists them as well.
+   * - expo: Expo's push service (FCM / APNs underneath). EXPO_ACCESS_TOKEN is optional.
+   * - dev-outbox: writes pushes to a local file for development and tests. Refused in production.
+   * - none: keep messages in the app only.
+   */
+  PUSH_PROVIDER: z.enum(['expo', 'dev-outbox', 'none']).default('dev-outbox'),
+  PUSH_DEV_OUTBOX: z.string().default('.dev-outbox/push.jsonl'),
+  EXPO_ACCESS_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -49,6 +58,11 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   if (env.NODE_ENV === 'production' && env.OTP_PROVIDER === 'dev-outbox') {
     throw new Error(
       'Invalid environment configuration:\n  - OTP_PROVIDER: dev-outbox is not allowed in production',
+    );
+  }
+  if (env.NODE_ENV === 'production' && env.PUSH_PROVIDER === 'dev-outbox') {
+    throw new Error(
+      'Invalid environment configuration:\n  - PUSH_PROVIDER: dev-outbox is not allowed in production',
     );
   }
   if (env.OTP_PROVIDER === 'msg91' && (!env.MSG91_AUTH_KEY || !env.MSG91_TEMPLATE_ID)) {

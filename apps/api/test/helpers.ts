@@ -24,6 +24,7 @@ import {
 } from '../src/db/schema';
 import { DEMO_SETTINGS } from '../src/modules/settings/settings.schema';
 import type { OtpProvider } from '../src/providers/otp';
+import type { PushMessage, PushProvider } from '../src/providers/push';
 import { createLogger } from '../src/lib/logger';
 import { TokenService } from '../src/lib/tokens';
 
@@ -49,6 +50,8 @@ export interface TestHarness {
   lastCode: (phone: string) => string;
   /** When set, the next send fails like a provider outage. */
   failNextSend: { value: boolean };
+  /** Pushes "sent" during the test, oldest first. Delivery is the only part replaced. */
+  pushes: PushMessage[];
   /** Set `now` to fix the time the ordering rules see; null = the real time. */
   clock: { now: Date | null };
   /** DEMO settings, the 20 L can at ₹40 and Morning/Afternoon/Evening windows (Mon–Sat, 100 cans). */
@@ -98,7 +101,16 @@ export async function createHarness(
     },
   };
   const clock: TestHarness['clock'] = { now: null };
+  const pushes: PushMessage[] = [];
+  const pushProvider: PushProvider = {
+    name: 'test',
+    send: async (messages) => {
+      pushes.push(...messages);
+      return messages.map((m) => (m.token.includes('Gone') ? 'gone' : 'sent'));
+    },
+  };
   const app = createApp({
+    pushProvider,
     env,
     db: handle.db,
     logger: createLogger('silent'),
@@ -219,6 +231,7 @@ export async function createHarness(
     supplierB: b!.id,
     makeUser,
     sms,
+    pushes,
     lastCode,
     failNextSend,
     clock,

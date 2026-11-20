@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatINR, istDate } from '@wtrdrop/shared';
+import { DUES_REMINDER_GAP_HOURS, formatINR, istDate } from '@wtrdrop/shared';
 import { call } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { Chip, LiveMessage, PageHeader, TableWrap, maskPhone } from '../components/ui';
@@ -18,6 +18,7 @@ interface Due {
   cansHeld: number;
   owingSince: string | null;
   lastPaidOn: string | null;
+  lastRemindedAt: string | null;
   overLimit: boolean;
 }
 interface Dues {
@@ -326,14 +327,17 @@ export function PaymentsPage() {
                         </td>
                         <td>{r.lastPaidOn ? dateText(r.lastPaidOn) : t('money.never')}</td>
                         <td>
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-compact"
-                            onClick={() => setPaying(r)}
-                            aria-label={t('money.recordFor', { name: r.name ?? '' })}
-                          >
-                            {t('money.recordPayment')}
-                          </button>
+                          <div className="row-actions">
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-compact"
+                              onClick={() => setPaying(r)}
+                              aria-label={t('money.recordFor', { name: r.name ?? '' })}
+                            >
+                              {t('money.recordPayment')}
+                            </button>
+                            <RemindButton due={r} onDone={refresh} onError={setError} />
+                          </div>
                         </td>
                       </tr>
                     );
@@ -429,5 +433,63 @@ export function PaymentsPage() {
         onSaved={refresh}
       />
     </div>
+  );
+}
+
+/**
+ * Sends the customer a message about their dues (push and in the app). Once a day at most, so the
+ * button says when the last one went.
+ */
+function RemindButton({
+  due,
+  onDone,
+  onError,
+}: {
+  due: Due;
+  onDone: (text: string) => void;
+  onError: (text: string | null) => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const [busy, setBusy] = useState(false);
+  const last = due.lastRemindedAt ? new Date(due.lastRemindedAt) : null;
+  const recent = last !== null && Date.now() - last.getTime() < DUES_REMINDER_GAP_HOURS * 3600_000;
+  const name = due.name ?? t('customers.noName');
+  const send = async () => {
+    setBusy(true);
+    onError(null);
+    try {
+      await call(`/admin/customers/${due.customerId}/remind`, { method: 'POST' });
+      onDone(t('money.reminded', { name }));
+    } catch (e) {
+      onError(errorText(t, e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <button
+        type="button"
+        className="btn btn-secondary btn-compact"
+        disabled={busy || recent}
+        onClick={() => void send()}
+        aria-label={t('money.remindFor', { name })}
+      >
+        {t('money.remind')}
+      </button>
+      {last ? (
+        <span className="cell-note">
+          {t('money.lastReminded', {
+            when: last.toLocaleString(i18n.language === 'ml' ? 'ml-IN' : 'en-IN', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'Asia/Kolkata',
+            }),
+          })}
+        </span>
+      ) : null}
+    </>
   );
 }

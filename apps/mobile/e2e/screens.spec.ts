@@ -33,7 +33,6 @@ test('phone sign-in: Send code stays off until the number is a valid Indian mobi
 });
 
 const SCREENS: [string, string | RegExp][] = [
-  ['/help', /help/i],
   ['/phone', 'Your mobile number'],
   ['/otp?phone=9847012345', 'Enter the code'],
 ];

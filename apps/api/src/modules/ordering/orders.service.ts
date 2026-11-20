@@ -33,6 +33,7 @@ import {
 } from '../../db/schema';
 import { AppError, errors } from '../../lib/errors';
 import { recordAudit } from '../../lib/audit';
+import { customerUserId, queueNotification } from '../notifications/notifications.service';
 import type { TenantContext } from '../../lib/context';
 import { mainProduct, orderSettings, unitPriceFor, type OrderSettings } from './catalog.service';
 import { releaseWindow, reserveWindow, windowSlots } from './windows.service';
@@ -444,6 +445,18 @@ export async function transitionOrder(
       before: { status: o.status },
       after: { status: to, reason: reason?.trim() || null },
     });
+    // The customer is told when the office cancels or turns down their order.
+    if (ctx.role !== 'customer' && (to === 'CANCELLED' || to === 'REJECTED')) {
+      const userId = await customerUserId(tx, o.customerId);
+      if (userId)
+        await queueNotification(tx, {
+          supplierId: ctx.supplierId,
+          userId,
+          kind: 'order_cancelled',
+          params: { orderNo: o.orderNo },
+          orderId: o.id,
+        });
+    }
   });
   return getOrder(db, ctx.supplierId, orderId);
 }

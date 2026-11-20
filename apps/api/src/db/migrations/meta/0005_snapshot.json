@@ -117,12 +117,8 @@
           "name": "account_ledger_supplier_id_suppliers_id_fk",
           "tableFrom": "account_ledger",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -130,12 +126,8 @@
           "name": "account_ledger_customer_id_customers_id_fk",
           "tableFrom": "account_ledger",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -143,12 +135,8 @@
           "name": "account_ledger_order_id_orders_id_fk",
           "tableFrom": "account_ledger",
           "tableTo": "orders",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -156,12 +144,8 @@
           "name": "account_ledger_attempt_id_delivery_attempts_id_fk",
           "tableFrom": "account_ledger",
           "tableTo": "delivery_attempts",
-          "columnsFrom": [
-            "attempt_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["attempt_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -169,12 +153,8 @@
           "name": "account_ledger_actor_user_id_users_id_fk",
           "tableFrom": "account_ledger",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -182,12 +162,8 @@
           "name": "account_ledger_payment_id_payments_id_fk",
           "tableFrom": "account_ledger",
           "tableTo": "payments",
-          "columnsFrom": [
-            "payment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["payment_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -335,12 +311,8 @@
           "name": "addresses_supplier_id_suppliers_id_fk",
           "tableFrom": "addresses",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -348,12 +320,8 @@
           "name": "addresses_customer_id_customers_id_fk",
           "tableFrom": "addresses",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -361,12 +329,8 @@
           "name": "addresses_service_area_id_service_areas_id_fk",
           "tableFrom": "addresses",
           "tableTo": "service_areas",
-          "columnsFrom": [
-            "service_area_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_area_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -504,12 +468,8 @@
           "name": "audit_logs_supplier_id_suppliers_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -517,12 +477,8 @@
           "name": "audit_logs_actor_user_id_users_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -640,12 +596,8 @@
           "name": "can_ledger_supplier_id_suppliers_id_fk",
           "tableFrom": "can_ledger",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -653,12 +605,8 @@
           "name": "can_ledger_customer_id_customers_id_fk",
           "tableFrom": "can_ledger",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -666,12 +614,8 @@
           "name": "can_ledger_order_id_orders_id_fk",
           "tableFrom": "can_ledger",
           "tableTo": "orders",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -679,12 +623,8 @@
           "name": "can_ledger_attempt_id_delivery_attempts_id_fk",
           "tableFrom": "can_ledger",
           "tableTo": "delivery_attempts",
-          "columnsFrom": [
-            "attempt_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["attempt_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -692,12 +632,8 @@
           "name": "can_ledger_actor_user_id_users_id_fk",
           "tableFrom": "can_ledger",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -768,12 +704,8 @@
           "name": "closed_days_supplier_id_suppliers_id_fk",
           "tableFrom": "closed_days",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -781,12 +713,8 @@
           "name": "closed_days_window_id_delivery_windows_id_fk",
           "tableFrom": "closed_days",
           "tableTo": "delivery_windows",
-          "columnsFrom": [
-            "window_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["window_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -794,12 +722,8 @@
           "name": "closed_days_created_by_users_id_fk",
           "tableFrom": "closed_days",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -809,11 +733,7 @@
         "closed_days_uq": {
           "name": "closed_days_uq",
           "nullsNotDistinct": true,
-          "columns": [
-            "supplier_id",
-            "date",
-            "window_id"
-          ]
+          "columns": ["supplier_id", "date", "window_id"]
         }
       },
       "policies": {},
@@ -909,12 +829,8 @@
           "name": "customer_prices_supplier_id_suppliers_id_fk",
           "tableFrom": "customer_prices",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -922,12 +838,8 @@
           "name": "customer_prices_customer_id_customers_id_fk",
           "tableFrom": "customer_prices",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -935,12 +847,8 @@
           "name": "customer_prices_product_id_products_id_fk",
           "tableFrom": "customer_prices",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -948,12 +856,8 @@
           "name": "customer_prices_created_by_users_id_fk",
           "tableFrom": "customer_prices",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1119,12 +1023,8 @@
           "name": "customers_supplier_id_suppliers_id_fk",
           "tableFrom": "customers",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1132,12 +1032,8 @@
           "name": "customers_user_id_users_id_fk",
           "tableFrom": "customers",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1145,12 +1041,8 @@
           "name": "customers_created_by_users_id_fk",
           "tableFrom": "customers",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1392,12 +1284,8 @@
           "name": "delivery_attempts_supplier_id_suppliers_id_fk",
           "tableFrom": "delivery_attempts",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1405,12 +1293,8 @@
           "name": "delivery_attempts_order_id_orders_id_fk",
           "tableFrom": "delivery_attempts",
           "tableTo": "orders",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1418,12 +1302,8 @@
           "name": "delivery_attempts_trip_id_trips_id_fk",
           "tableFrom": "delivery_attempts",
           "tableTo": "trips",
-          "columnsFrom": [
-            "trip_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trip_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1431,12 +1311,8 @@
           "name": "delivery_attempts_staff_user_id_users_id_fk",
           "tableFrom": "delivery_attempts",
           "tableTo": "users",
-          "columnsFrom": [
-            "staff_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["staff_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1444,12 +1320,8 @@
           "name": "delivery_attempts_undone_by_users_id_fk",
           "tableFrom": "delivery_attempts",
           "tableTo": "users",
-          "columnsFrom": [
-            "undone_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["undone_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1569,12 +1441,8 @@
           "name": "delivery_windows_supplier_id_suppliers_id_fk",
           "tableFrom": "delivery_windows",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1713,12 +1581,8 @@
           "name": "deposit_ledger_supplier_id_suppliers_id_fk",
           "tableFrom": "deposit_ledger",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1726,12 +1590,8 @@
           "name": "deposit_ledger_customer_id_customers_id_fk",
           "tableFrom": "deposit_ledger",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1739,12 +1599,8 @@
           "name": "deposit_ledger_order_id_orders_id_fk",
           "tableFrom": "deposit_ledger",
           "tableTo": "orders",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1752,12 +1608,8 @@
           "name": "deposit_ledger_attempt_id_delivery_attempts_id_fk",
           "tableFrom": "deposit_ledger",
           "tableTo": "delivery_attempts",
-          "columnsFrom": [
-            "attempt_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["attempt_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1765,12 +1617,8 @@
           "name": "deposit_ledger_actor_user_id_users_id_fk",
           "tableFrom": "deposit_ledger",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1898,12 +1746,8 @@
           "name": "deposit_refunds_supplier_id_suppliers_id_fk",
           "tableFrom": "deposit_refunds",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1911,12 +1755,8 @@
           "name": "deposit_refunds_customer_id_customers_id_fk",
           "tableFrom": "deposit_refunds",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1924,12 +1764,8 @@
           "name": "deposit_refunds_actor_user_id_users_id_fk",
           "tableFrom": "deposit_refunds",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2064,12 +1900,8 @@
           "name": "idempotency_keys_user_id_users_id_fk",
           "tableFrom": "idempotency_keys",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2162,12 +1994,8 @@
           "name": "order_items_order_id_orders_id_fk",
           "tableFrom": "order_items",
           "tableTo": "orders",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2175,12 +2003,8 @@
           "name": "order_items_product_id_products_id_fk",
           "tableFrom": "order_items",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2286,12 +2110,8 @@
           "name": "order_status_history_supplier_id_suppliers_id_fk",
           "tableFrom": "order_status_history",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2299,12 +2119,8 @@
           "name": "order_status_history_order_id_orders_id_fk",
           "tableFrom": "order_status_history",
           "tableTo": "orders",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2312,12 +2128,8 @@
           "name": "order_status_history_actor_user_id_users_id_fk",
           "tableFrom": "order_status_history",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2601,12 +2413,8 @@
           "name": "orders_supplier_id_suppliers_id_fk",
           "tableFrom": "orders",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2614,12 +2422,8 @@
           "name": "orders_customer_id_customers_id_fk",
           "tableFrom": "orders",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2627,12 +2431,8 @@
           "name": "orders_address_id_addresses_id_fk",
           "tableFrom": "orders",
           "tableTo": "addresses",
-          "columnsFrom": [
-            "address_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["address_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2640,12 +2440,8 @@
           "name": "orders_service_area_id_service_areas_id_fk",
           "tableFrom": "orders",
           "tableTo": "service_areas",
-          "columnsFrom": [
-            "service_area_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_area_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2653,12 +2449,8 @@
           "name": "orders_window_id_delivery_windows_id_fk",
           "tableFrom": "orders",
           "tableTo": "delivery_windows",
-          "columnsFrom": [
-            "window_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["window_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2666,12 +2458,8 @@
           "name": "orders_placed_by_users_id_fk",
           "tableFrom": "orders",
           "tableTo": "users",
-          "columnsFrom": [
-            "placed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["placed_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2679,12 +2467,8 @@
           "name": "orders_trip_id_trips_id_fk",
           "tableFrom": "orders",
           "tableTo": "trips",
-          "columnsFrom": [
-            "trip_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trip_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2992,12 +2776,8 @@
           "name": "payments_supplier_id_suppliers_id_fk",
           "tableFrom": "payments",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3005,12 +2785,8 @@
           "name": "payments_customer_id_customers_id_fk",
           "tableFrom": "payments",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3018,12 +2794,8 @@
           "name": "payments_collected_by_users_id_fk",
           "tableFrom": "payments",
           "tableTo": "users",
-          "columnsFrom": [
-            "collected_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["collected_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3031,12 +2803,8 @@
           "name": "payments_trip_id_trips_id_fk",
           "tableFrom": "payments",
           "tableTo": "trips",
-          "columnsFrom": [
-            "trip_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trip_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3044,12 +2812,8 @@
           "name": "payments_attempt_id_delivery_attempts_id_fk",
           "tableFrom": "payments",
           "tableTo": "delivery_attempts",
-          "columnsFrom": [
-            "attempt_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["attempt_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3057,12 +2821,8 @@
           "name": "payments_reversed_by_users_id_fk",
           "tableFrom": "payments",
           "tableTo": "users",
-          "columnsFrom": [
-            "reversed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reversed_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3070,12 +2830,8 @@
           "name": "payments_verified_by_users_id_fk",
           "tableFrom": "payments",
           "tableTo": "users",
-          "columnsFrom": [
-            "verified_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["verified_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3168,12 +2924,8 @@
           "name": "product_prices_supplier_id_suppliers_id_fk",
           "tableFrom": "product_prices",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3181,12 +2933,8 @@
           "name": "product_prices_product_id_products_id_fk",
           "tableFrom": "product_prices",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3194,12 +2942,8 @@
           "name": "product_prices_created_by_users_id_fk",
           "tableFrom": "product_prices",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3308,12 +3052,8 @@
           "name": "products_supplier_id_suppliers_id_fk",
           "tableFrom": "products",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3422,12 +3162,8 @@
           "name": "service_areas_supplier_id_suppliers_id_fk",
           "tableFrom": "service_areas",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3549,12 +3285,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3562,12 +3294,8 @@
           "name": "sessions_supplier_id_suppliers_id_fk",
           "tableFrom": "sessions",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3577,9 +3305,7 @@
         "sessions_refresh_token_hash_unique": {
           "name": "sessions_refresh_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "refresh_token_hash"
-          ]
+          "columns": ["refresh_token_hash"]
         }
       },
       "policies": {},
@@ -3628,12 +3354,8 @@
           "name": "settings_supplier_id_suppliers_id_fk",
           "tableFrom": "settings",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3641,12 +3363,8 @@
           "name": "settings_updated_by_users_id_fk",
           "tableFrom": "settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3654,10 +3372,7 @@
       "compositePrimaryKeys": {
         "settings_supplier_id_key_pk": {
           "name": "settings_supplier_id_key_pk",
-          "columns": [
-            "supplier_id",
-            "key"
-          ]
+          "columns": ["supplier_id", "key"]
         }
       },
       "uniqueConstraints": {},
@@ -3762,12 +3477,8 @@
           "name": "staff_devices_supplier_id_suppliers_id_fk",
           "tableFrom": "staff_devices",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3775,12 +3486,8 @@
           "name": "staff_devices_user_id_users_id_fk",
           "tableFrom": "staff_devices",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3928,12 +3635,8 @@
           "name": "stock_movements_supplier_id_suppliers_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3941,12 +3644,8 @@
           "name": "stock_movements_trip_id_trips_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "trips",
-          "columnsFrom": [
-            "trip_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trip_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3954,12 +3653,8 @@
           "name": "stock_movements_attempt_id_delivery_attempts_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "delivery_attempts",
-          "columnsFrom": [
-            "attempt_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["attempt_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3967,12 +3662,8 @@
           "name": "stock_movements_customer_id_customers_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3980,12 +3671,8 @@
           "name": "stock_movements_actor_user_id_users_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -4073,9 +3760,7 @@
         "suppliers_slug_unique": {
           "name": "suppliers_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -4273,12 +3958,8 @@
           "name": "trips_supplier_id_suppliers_id_fk",
           "tableFrom": "trips",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -4286,12 +3967,8 @@
           "name": "trips_staff_user_id_users_id_fk",
           "tableFrom": "trips",
           "tableTo": "users",
-          "columnsFrom": [
-            "staff_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["staff_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -4299,12 +3976,8 @@
           "name": "trips_reconciled_by_users_id_fk",
           "tableFrom": "trips",
           "tableTo": "users",
-          "columnsFrom": [
-            "reconciled_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reconciled_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -4410,12 +4083,8 @@
           "name": "user_roles_user_id_users_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -4423,12 +4092,8 @@
           "name": "user_roles_supplier_id_suppliers_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -4506,9 +4171,7 @@
         "users_phone_unique": {
           "name": "users_phone_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "phone"
-          ]
+          "columns": ["phone"]
         }
       },
       "policies": {},
@@ -4564,12 +4227,8 @@
           "name": "window_bookings_supplier_id_suppliers_id_fk",
           "tableFrom": "window_bookings",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -4577,12 +4236,8 @@
           "name": "window_bookings_window_id_delivery_windows_id_fk",
           "tableFrom": "window_bookings",
           "tableTo": "delivery_windows",
-          "columnsFrom": [
-            "window_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["window_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -4590,10 +4245,7 @@
       "compositePrimaryKeys": {
         "window_bookings_window_id_date_pk": {
           "name": "window_bookings_window_id_date_pk",
-          "columns": [
-            "window_id",
-            "date"
-          ]
+          "columns": ["window_id", "date"]
         }
       },
       "uniqueConstraints": {},
@@ -4627,86 +4279,47 @@
     "public.attempt_outcome": {
       "name": "attempt_outcome",
       "schema": "public",
-      "values": [
-        "delivered",
-        "failed"
-      ]
+      "values": ["delivered", "failed"]
     },
     "public.can_entry_type": {
       "name": "can_entry_type",
       "schema": "public",
-      "values": [
-        "delivery",
-        "return",
-        "reversal",
-        "opening",
-        "adjustment"
-      ]
+      "values": ["delivery", "return", "reversal", "opening", "adjustment"]
     },
     "public.can_state": {
       "name": "can_state",
       "schema": "public",
-      "values": [
-        "full",
-        "empty",
-        "damaged"
-      ]
+      "values": ["full", "empty", "damaged"]
     },
     "public.customer_type": {
       "name": "customer_type",
       "schema": "public",
-      "values": [
-        "household",
-        "office",
-        "shop"
-      ]
+      "values": ["household", "office", "shop"]
     },
     "public.deposit_entry_type": {
       "name": "deposit_entry_type",
       "schema": "public",
-      "values": [
-        "charge",
-        "reversal",
-        "refund",
-        "opening",
-        "adjustment"
-      ]
+      "values": ["charge", "reversal", "refund", "opening", "adjustment"]
     },
     "public.failure_reason": {
       "name": "failure_reason",
       "schema": "public",
-      "values": [
-        "NOT_HOME",
-        "LOCKED",
-        "REFUSED",
-        "WRONG_ADDRESS",
-        "OUT_OF_STOCK",
-        "OTHER"
-      ]
+      "values": ["NOT_HOME", "LOCKED", "REFUSED", "WRONG_ADDRESS", "OUT_OF_STOCK", "OTHER"]
     },
     "public.idempotency_state": {
       "name": "idempotency_state",
       "schema": "public",
-      "values": [
-        "in_progress",
-        "completed"
-      ]
+      "values": ["in_progress", "completed"]
     },
     "public.language": {
       "name": "language",
       "schema": "public",
-      "values": [
-        "en",
-        "ml"
-      ]
+      "values": ["en", "ml"]
     },
     "public.order_channel": {
       "name": "order_channel",
       "schema": "public",
-      "values": [
-        "app",
-        "office"
-      ]
+      "values": ["app", "office"]
     },
     "public.order_status": {
       "name": "order_status",
@@ -4725,59 +4338,32 @@
     "public.payment_method": {
       "name": "payment_method",
       "schema": "public",
-      "values": [
-        "cash",
-        "upi",
-        "later"
-      ]
+      "values": ["cash", "upi", "later"]
     },
     "public.record_status": {
       "name": "record_status",
       "schema": "public",
-      "values": [
-        "active",
-        "disabled"
-      ]
+      "values": ["active", "disabled"]
     },
     "public.refund_method": {
       "name": "refund_method",
       "schema": "public",
-      "values": [
-        "cash",
-        "upi",
-        "adjust"
-      ]
+      "values": ["cash", "upi", "adjust"]
     },
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": [
-        "customer",
-        "staff",
-        "admin",
-        "owner"
-      ]
+      "values": ["customer", "staff", "admin", "owner"]
     },
     "public.stock_place": {
       "name": "stock_place",
       "schema": "public",
-      "values": [
-        "depot",
-        "trip",
-        "customer",
-        "damaged",
-        "outside"
-      ]
+      "values": ["depot", "trip", "customer", "damaged", "outside"]
     },
     "public.trip_status": {
       "name": "trip_status",
       "schema": "public",
-      "values": [
-        "planned",
-        "on_route",
-        "ended",
-        "reconciled"
-      ]
+      "values": ["planned", "on_route", "ended", "reconciled"]
     }
   },
   "schemas": {},

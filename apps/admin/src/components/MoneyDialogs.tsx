@@ -31,7 +31,7 @@ export interface Balances {
 }
 
 /** A small form inside a dialog: Save and Cancel, the error, and a reset when it closes. */
-function FormDialog({
+export function FormDialog({
   open,
   title,
   onClose,
@@ -78,7 +78,7 @@ function FormDialog({
   );
 }
 
-function useSaving() {
+export function useSaving() {
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

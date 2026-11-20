@@ -8,6 +8,7 @@ import { isOwner, useAuth } from '../lib/auth';
 import { Dialog } from '../components/Dialog';
 import { Chip, LiveMessage, PageHeader, TableWrap } from '../components/ui';
 import { TeamTable } from '../components/TeamTable';
+import { BusinessDetails, BusinessRules } from '../components/BusinessSettings';
 import {
   ClosedDaySettings,
   PriceSettings,
@@ -31,6 +32,14 @@ export function SettingsPage() {
   return (
     <div className="page">
       <PageHeader title={t('nav.settings')} />
+      <section aria-labelledby="business-h">
+        <h2 id="business-h">{t('business.title')}</h2>
+        <BusinessDetails />
+      </section>
+      <section aria-labelledby="rules-h">
+        <h2 id="rules-h">{t('business.rulesTitle')}</h2>
+        <BusinessRules />
+      </section>
       <section aria-labelledby="price-h">
         <h2 id="price-h">{t('settings.price')}</h2>
         <PriceSettings />

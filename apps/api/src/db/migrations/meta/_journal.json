@@ -43,6 +43,13 @@
       "when": 1795154379701,
       "tag": "0005_phase6_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795158161301,
+      "tag": "0006_phase7_admin_reports",
+      "breakpoints": true
     }
   ]
 }

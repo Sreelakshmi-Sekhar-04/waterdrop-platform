@@ -6,6 +6,7 @@ import { addressInputSchema, type CustomerType } from '@wtrdrop/shared';
 import { call } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { Dialog } from '../components/Dialog';
+import { CustomerComplaints } from '../components/Complaints';
 import { Chip, LiveMessage, PageHeader } from '../components/ui';
 import { CustomerLedgers } from '../components/CustomerLedgers';
 import { CustomerOrders, CustomerPrice } from '../components/CustomerOrders';
@@ -194,6 +195,8 @@ export function CustomerDetailPage() {
       <CustomerOrders customerId={c.id} active={c.status === 'active' && c.addresses.length > 0} />
 
       <CustomerLedgers customerId={c.id} customerName={c.name ?? t('customers.noName')} />
+
+      <CustomerComplaints customerId={c.id} />
 
       <AddAddressDialog
         customerId={c.id}

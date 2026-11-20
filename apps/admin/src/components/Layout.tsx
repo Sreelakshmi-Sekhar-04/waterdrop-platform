@@ -12,6 +12,7 @@ export const NAV_ITEMS = [
   { path: '/staff', key: 'staff', phase: 'Phase 3' },
   { path: '/stock', key: 'stock', phase: 'Phase 5' },
   { path: '/payments', key: 'payments', phase: 'Phase 6' },
+  { path: '/complaints', key: 'complaints', phase: 'Phase 7' },
   { path: '/reports', key: 'reports', phase: 'Phase 7' },
   { path: '/settings', key: 'settings', phase: 'Phase 7' },
 ] as const;

@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { istDate } from '@wtrdrop/shared';
-import { officeApi, officeCustomer, officeOrder, type Office } from './office-api';
+import { officeApi, officeCustomer, officeOrder, ownerApi, type Office } from './office-api';
 import { fitsPhoneWidth, signInWithCode, tapPin } from './support';
 
 /**
@@ -22,6 +22,7 @@ let context: BrowserContext;
 let page: Page;
 let customerA: { customerId: string; addressId: string };
 let orderB: { id: string; orderNo: number };
+let customer: { ctx: BrowserContext; page: Page } | undefined;
 
 /** Report screenshots, only when SHOTS names a folder. */
 async function shot(name: string) {
@@ -72,6 +73,7 @@ test.beforeAll(async ({ browser }, info) => {
 });
 
 test.afterAll(async () => {
+  await customer?.ctx.close();
   await context?.close();
   await office?.dispose();
 });
@@ -232,5 +234,96 @@ test('the customer sees the cans they hold, that nothing is due, and the stateme
     await p.screenshot({ path: `${process.env.SHOTS}/customer-statement.png` });
   await p.getByRole('button', { name: 'Previous month' }).click();
   await expect(p.getByText('Nothing was charged or paid this month.')).toBeVisible();
-  await ctx.close();
+  // Stays signed in for the Help step, like the same person carrying on.
+  customer = { ctx, page: p };
 });
+
+test('Help: WhatsApp the business, report a problem, and read the answer in Messages', async () => {
+  // The owner adds the business's help number in Settings (tested in the admin portal).
+  const owner = await ownerApi();
+  await owner.patch('admin/settings', { supportPhone: '+919847012345' });
+  await owner.dispose();
+
+  const p = customer!.page;
+  await p.getByRole('button', { name: 'Back' }).click();
+  await expect(p.getByText('Our cans with you')).toBeVisible({ timeout: 15_000 });
+  // The van left and delivered: two new messages wait on the home screen.
+  await expect(p.getByRole('button', { name: 'Messages, 2 new messages' })).toBeVisible();
+
+  await p.getByText('Help', { exact: true }).last().click();
+  await expect(p.getByRole('heading', { name: 'Help' })).toBeVisible({ timeout: 15_000 });
+  // WhatsApp opens in a new tab; the test stops it at the wa.me link (no outside network).
+  await p
+    .context()
+    .route('https://wa.me/**', (r) =>
+      r.fulfill({ contentType: 'text/html', body: '<title>WhatsApp</title>' }),
+    );
+  const [chat] = await Promise.all([
+    p.waitForEvent('popup'),
+    p.getByRole('button', { name: 'WhatsApp us' }).click(),
+  ]);
+  await chat.waitForLoadState();
+  expect(chat.url()).toBe('https://wa.me/919847012345');
+  await chat.close();
+
+  await p.getByRole('button', { name: 'Can count is wrong' }).click();
+  await expect(p.getByRole('heading', { name: 'Report a problem' })).toBeVisible();
+  await expect(p.getByRole('radio', { name: 'Can count is wrong' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await p
+    .getByRole('radio', { name: /^Order WD-\d+/ })
+    .first()
+    .click();
+  await p.getByLabel('Anything to add? (optional)').fill('Got 1 can, the bill says 2');
+  await axeOn(p);
+  await fitsPhoneWidth(p);
+  if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/customer-report.png` });
+  await p.getByRole('button', { name: 'Send to the office' }).click();
+  await expect(p.getByText('Sent. The office will reply here and in Messages.')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(p.getByText('Waiting for the office')).toBeVisible();
+
+  // The office answers from the portal.
+  const open = await office.get<{ complaints: { id: string; customerId: string }[] }>(
+    'admin/complaints?status=open',
+  );
+  const mine = open.complaints.find((c) => c.customerId === customerA.customerId)!;
+  await office.post(`admin/complaints/${mine.id}/resolve`, {
+    resolution: 'We checked: 2 cans were left. Please count again, and call us if not.',
+  });
+
+  await p.reload();
+  await expect(p.getByText(/^Office: We checked/)).toBeVisible({ timeout: 15_000 });
+  await axeOn(p);
+  if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/customer-help.png` });
+
+  await p.getByText('Home', { exact: true }).last().click();
+  await p.getByRole('button', { name: 'Messages, 3 new messages' }).click();
+  await expect(p.getByRole('heading', { name: 'Messages' })).toBeVisible({ timeout: 15_000 });
+  await expect(p.getByText('Your complaint')).toBeVisible();
+  await expect(p.getByText(/^Resolved: We checked/)).toBeVisible();
+  await expect(p.getByText('Your water is on the way')).toBeVisible();
+  await axeOn(p);
+  await fitsPhoneWidth(p);
+  if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/customer-messages.png` });
+  // Opening Messages marks them read: back home, the button has no "new" count.
+  await p.getByRole('button', { name: 'Back' }).click();
+  await expect(p.getByRole('button', { name: 'Messages', exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
+});
+
+async function axeOn(p: Page) {
+  const results = await new AxeBuilder({ page: p })
+    .withTags(['wcag2a', 'wcag2aa'])
+    .disableRules(['meta-viewport'])
+    .analyze();
+  expect(
+    results.violations.map(
+      (v) => `${v.id}: ${v.nodes.map((n) => n.html.slice(0, 140)).join(' | ')}`,
+    ),
+  ).toEqual([]);
+}

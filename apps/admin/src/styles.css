@@ -1006,3 +1006,42 @@ select,
     overflow: visible;
   }
 }
+
+/* Phase 7: reports, activity log and business settings. */
+.table-wrap tfoot td {
+  border-top: 2px solid var(--color-border);
+  font-weight: 800;
+}
+.table-wrap th.wrap {
+  white-space: normal;
+  min-width: 180px;
+}
+pre.json {
+  margin: var(--space-xs) 0 var(--space-sm);
+  padding: var(--space-sm);
+  max-width: 420px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--font-caption);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.fieldset-plain {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.input-prefix {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.input-prefix input {
+  flex: 1;
+}

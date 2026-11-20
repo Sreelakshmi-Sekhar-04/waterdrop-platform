@@ -13,6 +13,8 @@ import { StockPage } from './pages/StockPage';
 import { PaymentsPage } from './pages/PaymentsPage';
 import { StatementPage } from './pages/StatementPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { ComplaintsPage } from './pages/ComplaintsPage';
 import { SignInPage } from './pages/SignInPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
@@ -24,6 +26,8 @@ const BUILT = new Set<string>([
   '/staff',
   '/stock',
   '/payments',
+  '/complaints',
+  '/reports',
   '/settings',
 ]);
 
@@ -46,6 +50,8 @@ const router = createBrowserRouter([
       { path: 'stock', element: <StockPage /> },
       { path: 'payments', element: <PaymentsPage /> },
       { path: 'customers/:id/statement', element: <StatementPage /> },
+      { path: 'complaints', element: <ComplaintsPage /> },
+      { path: 'reports', element: <ReportsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       ...NAV_ITEMS.filter((i) => !BUILT.has(i.path)).map((i) => ({
         path: i.path.slice(1),

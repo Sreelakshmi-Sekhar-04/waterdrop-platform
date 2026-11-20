@@ -333,6 +333,11 @@ export async function listDues(db: Database, supplierId: string) {
       lastPaidOn: sql<string | null>`(
         select max(p.paid_on)::text from payments p
         where p.customer_id = ${customers.id} and p.reversed_at is null)`,
+      lastRemindedAt: sql<string | null>`(
+        select to_char(max(n.created_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        from notifications n
+        where n.user_id = ${customers.userId} and n.supplier_id = ${customers.supplierId}
+          and n.kind = 'dues_reminder')`,
     })
     .from(customers)
     .innerJoin(users, eq(users.id, customers.userId))

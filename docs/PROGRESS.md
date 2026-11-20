@@ -6,11 +6,11 @@ Read this file first at the start of every Claude Code session. Update it at the
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 6: Payments and corrections** (complete, waiting for review) |
-| Phase status | Phase 5 approved 20 Nov 2026 ("start Phase 6"). Phase 6 delivered 20 Nov on branch `phase-6-payments` (built on `phase-5-delivery`). **Waiting for Sreelakshmi's review** before Phase 7. |
-| Next step | Review the Phase 6 report below, then Phase 7 (reports, the real Today page, notifications and reminders). |
-| Coding started? | Yes. Do not start Phase 7 until Phase 6 is reviewed. |
-| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-6-payments`. |
+| Current phase | **Phase 7: Admin and reports** (complete, waiting for review) |
+| Phase status | Phase 6 approved 20 Nov 2026 ("start Phase 7"). Phase 7 delivered 20 Nov on branch `phase-7-admin-reports` (built on `phase-6-payments`). **Waiting for Sreelakshmi's review** before Phase 8. |
+| Next step | Review the Phase 7 report below, then Phase 8 (hardening, performance, security and UAT, with the app builds and push registration). |
+| Coding started? | Yes. Do not start Phase 8 until Phase 7 is reviewed. |
+| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-7-admin-reports`. |
 | Docs location | Repo `docs/` is the source of truth from Phase 1. Project files `wtrdrop/docs/` hold a copy. |
 
 ## Key references
@@ -362,3 +362,60 @@ Defects found and fixed during Phase 6: (a) a deposit refund taken off the dues 
 **11. Deviations from the original requirements** — none. Dues reminders were listed with Phase 6 in the last report; they need SMS, so they move to Phase 7 notifications (recorded in the change log).
 
 **12. Recommended next step** — Phase 7: reports (sales, collections, dues ageing, cans), the real Today page, and customer notifications (order updates and dues reminders).
+
+### Phase 7: Admin and reports (20 Nov 2026)
+
+**1. What was completed**
+- **Today page** (portal), now real: "Needs your attention" (orders to accept, today's orders without a driver, failed deliveries to re-book, routes to check with the cash difference, open complaints, UPI to check, low stock for tomorrow), each with one button to the page that does it; "Today so far" (orders, delivered, collected cash and UPI, money due, cans with customers, full cans at the depot, cans booked for tomorrow); each driver's route with stops, cash and status. Refreshes every minute. The Phase 2 demo data is gone.
+- **Reports** (portal): sales, dues (with ageing), cans with customers, delivery staff, deliveries (on time, late, failed and why), stock (with the can pool check). Date range or "as of now", Last 7 / 30 days, totals row, **Download CSV**.
+- **Activity log** (Reports tab): who did what and when, filtered by kind and day, before and after on request, "Show more".
+- **Complaints**: a Complaints page (open / resolved, Resolve with a note the customer sees), "Note a complaint" on the customer page, and in the app **Help → Report a problem** (kind, which order, a few words) with the office's answer shown under it.
+- **Messages to customers**: out for delivery, delivered, not delivered, cancelled by the office, dues reminder, complaint resolved; in English or Malayalam. A new **Messages** screen in the app with an unread count on Home. Push sending is built on the server (Expo), ready for Phase 8.
+- **Dues reminder**: "Send reminder" on the Dues list, at most once a day, showing when the last one went.
+- **Settings**: Business details (name, GSTIN, FSSAI) and Business rules (deposit, delivery charge, free delivery from, cut-off, most cans, undo minutes, help phone, auto-accept). Owner changes them; office admins see them.
+- **Help** in the app: Call us and WhatsApp us now use the business's help phone (no longer "preview only").
+- **UAT workflows 1–6** run end to end as an automated test (see 5).
+
+**2. Files created or changed**
+- Shared: `packages/shared/src/admin.ts` (+ 3 tests): complaint, message, report, CSV, activity log and business schemas.
+- API: `src/db/schema.ts`, migration `0006_phase7_admin_reports.sql` (`complaints`, `notifications`, `push_tokens`), `src/providers/push/index.ts`, `src/modules/notifications/notifications.service.ts`, `src/modules/complaints/complaints.service.ts`, `src/modules/reports/{reports.service,admin.routes}.ts`, `src/modules/audit/audit.routes.ts`, message hooks in `delivery.service.ts` and `orders.service.ts`, `payments.service.ts` (last reminder), `config/env.ts`, `app.ts`, `.env.example`; tests `test/admin.test.ts` (12), `test/uat.test.ts` (6), `test/helpers.ts`, `providers/otp/otp.test.ts`.
+- Admin: `pages/{Today,Reports,Complaints}Page.tsx`, `components/{Complaints,BusinessSettings}.tsx`, `PaymentsPage.tsx`, `SettingsPage.tsx`, `CustomerDetailPage.tsx`, `MoneyDialogs.tsx`, `Layout.tsx`, `App.tsx`, `lib/api.ts` (downloads), `demo/fixtures.ts` (emptied), `styles.css`, locales, `e2e/portal.spec.ts`.
+- Mobile: `(customer)/{help,report,messages,home}.tsx`, `lib/help.ts`, `components/RoleGate.tsx`, locales, `e2e/{delivery,screens}.spec.ts`, `e2e/office-api.ts`.
+- Docs: `docs/adr/0006-admin-reports-and-messages.md`, README (API table, push in development), change log, this report.
+
+**3. Architecture and design decisions** — see ADR 0006. In short: one dashboard call built from the same records as every page; reports computed on request and downloadable as safe CSV; messages written in the same transaction as the change (outbox), then pushed once; the text is made in the reader's language; complaints and reminders are idempotent and limited; only the owner changes business details and rules.
+
+**4. APIs and database changes**
+- 14 new endpoints (README table): dashboard, reports (JSON and CSV), business details (2), complaints for the office (3), dues reminder, customer complaints (2), customer messages (2), push tokens (2); the activity log endpoint gains filters and paging.
+- Database: new tables `complaints` (one per `clientRequestId`), `notifications` (the outbox and the customer's messages), `push_tokens`; new enums for complaint kind and status, message kind and push status.
+
+**5. Tests executed** (all run on 20 Nov 2026 in the development container, PostgreSQL 16)
+- `pnpm lint`, `pnpm typecheck` (all packages), `prettier --check`, `pnpm check:i18n` (admin 920 texts, mobile 335).
+- `pnpm test`: design tokens 12, shared 57 (3 new), API 142 in 11 files against a real database (19 new). New API tests: messages and push in English and Malayalam with no phone numbers, a customer with no phone gets them in the app only, a gone push token is removed, office cancel tells the customer, dues reminder once a day and never when nothing is due, two identical complaints at the same moment save one, resolve once and the customer is told, the dashboard numbers, each report and its CSV, a bad date range, activity log filters and paging, business details owner-only.
+- **UAT workflows 1–6** (`test/uat.test.ts`): (1) a new customer signs up in the app, orders, gets 2 cans with the deposit, pays by UPI, the office checks it in the bank, the customer has the messages; (2) she reorders 3, gives back 1 empty, a deposit is charged for 2 more cans, the amount appears in Dues and the dues report, one reminder a day; (3) a failed delivery (nobody home) shows on Today, is re-booked for the next day and delivered; (4) a driver's day of 10 stops, one sent from the offline queue twice (saved once, at the time it happened), all cash handed over, the route checked, the staff report shows no difference and the can pool adds up; (5) three phone orders given to one driver in one step, the whole route moved to another driver when the first is absent; (6) a can correction by the owner shows in the activity log with the reason. Every workflow checks the ledgers add up.
+- Admin Playwright: 30 scenarios × desktop and phone = 60, against the real API. New: complaint noted from a call and resolved from the Today inbox; dues reminder once a day; Today page; all six reports, CSV download (file name and header checked) and the activity log filter; business details and rules (owner changes, office read-only). axe WCAG 2 A/AA and no horizontal scroll on each.
+- Mobile Playwright: 19 tests at Pixel 7 size. New: Help opens WhatsApp with the business number, Report a problem on an order, the office's answer shows under it and in Messages, the unread count clears after reading.
+- `expo export --platform android` bundle build.
+
+**6. Actual test results** — all passed: 211 unit/integration tests (including the 6 UAT workflows), 60 admin browser tests, 19 mobile browser tests, translation check, Android bundle.
+
+Defects found and fixed during Phase 7: (a) two identical complaints sent at the same moment failed with a server error; the customer is now locked first, so one is saved. (b) The Today buttons were read out without their number ("Open: open complaint"); they now say "Open: 1 open complaint". (c) After sending a problem report, the app had two Help screens stacked; it now goes back to the one it came from. (d) The last reminder time came from the database in a format some browsers cannot read; it is now standard ISO time. (e) The production settings check did not yet cover the new push setting; a development push outbox is now refused in production.
+
+**7. Known defects and limitations**
+- Pushes reach phones only after Phase 8 (the app must be built with an EAS project and ask permission). Until then messages are in the app's Messages screen. Failed pushes are not retried.
+- No SMS reminders (needs DLT templates). Reminders are pressed one customer at a time.
+- An undone delivery does not take back its "Delivered" message.
+- Reports have no charts; the sales report lists every day, including days with nothing. The activity log shows before/after as raw data.
+- The Today title says "Good morning" at any hour (Phase 2 design). Today refreshes every minute, not instantly.
+- Malayalam texts are draft translations and need a native speaker's review. All prices and numbers are DEMO values. Real SMS is still not connected.
+- The branch has not been pushed (GitHub App still missing); a git bundle is in project files.
+
+**8. Security considerations** — office pages, reports and the activity log answer 403 to customers and delivery staff; business details and rules change only for the owner (tested). Customers see only their own complaints and messages, without phone digits or the office's internal notes; messages never contain phone numbers (tested). CSV cells that a spreadsheet could run as a formula are neutralised. Push tokens belong to one user and are deleted when the push service reports them gone. The development push outbox is refused in production. Complaints, resolutions, reminders, business changes and settings changes are audited.
+
+**9. Pending decisions** — none blocking. Before launch: the business help phone, GSTIN and FSSAI number, and the real business rules (all can be entered in Settings by the owner).
+
+**10. Recommendations** — have the owner enter the real business rules and help phone in Settings now, so Phase 8 testing uses real values. Start the Expo (EAS) account and the Apple/Google developer accounts in the business's name; push registration and the store builds depend on them.
+
+**11. Deviations from the original requirements** — dues reminders are push/in-app, not SMS (SMS needs DLT approval). Push registration on the phone moves to Phase 8 with the app builds. Both recorded in the change log.
+
+**12. Recommended next step** — Phase 8: hardening, performance, security and UAT with real users, plus the app builds (EAS) with push registration, real SMS once the DLT template is approved, and backups with a restore test.

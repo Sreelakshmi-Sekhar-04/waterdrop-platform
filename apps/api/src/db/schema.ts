@@ -1,6 +1,6 @@
 /**
  * Phase 1 platform tables, Phase 3 users and addresses, Phase 4 ordering, Phase 5 delivery and
- * ledgers. Business tables
+ * ledgers, Phase 6 payments, Phase 7 complaints and customer messages. Business tables
  * (orders, ledgers, …) are added in the phase that builds each feature,
  * following the ERD in docs/PHASE-0-ANALYSIS.md §9.
  *
@@ -28,7 +28,10 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import {
+  COMPLAINT_CATEGORIES,
+  COMPLAINT_STATUSES,
   FAILURE_REASONS,
+  NOTIFICATION_KINDS,
   ORDER_CHANNELS,
   ORDER_STATUSES,
   PAYMENT_METHODS,
@@ -870,4 +873,87 @@ export const depositRefunds = pgTable(
     index('deposit_refunds_customer_idx').on(t.customerId, t.createdAt),
     check('deposit_refunds_amount_ck', sql`amount_paise > 0 and cans > 0`),
   ],
+);
+
+// ---------------------------------------------------------------- Phase 7
+
+export const complaintCategoryEnum = pgEnum('complaint_category', COMPLAINT_CATEGORIES);
+export const complaintStatusEnum = pgEnum('complaint_status', COMPLAINT_STATUSES);
+export const notificationKindEnum = pgEnum('notification_kind', NOTIFICATION_KINDS);
+export const pushStatusEnum = pgEnum('push_status', ['pending', 'sent', 'no_device', 'failed']);
+
+/** A problem a customer reports from the app, or the office notes after a call (simple, Phase 0 §11). */
+export const complaints = pgTable(
+  'complaints',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'restrict' }),
+    orderId: uuid('order_id').references(() => orders.id, { onDelete: 'restrict' }),
+    category: complaintCategoryEnum('category').notNull(),
+    note: text('note'),
+    status: complaintStatusEnum('status').notNull().default('open'),
+    resolution: text('resolution'),
+    resolvedBy: uuid('resolved_by').references(() => users.id, { onDelete: 'restrict' }),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    clientRequestId: uuid('client_request_id').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('complaints_client_request_uq').on(t.supplierId, t.clientRequestId),
+    index('complaints_supplier_status_idx').on(t.supplierId, t.status, t.createdAt),
+    index('complaints_customer_idx').on(t.customerId, t.createdAt),
+  ],
+);
+
+/**
+ * Messages to a person (Phase 0 §9 `notifications`). Written in the same transaction as the event
+ * (an outbox), then sent as a push after the request; the app also lists them.
+ */
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'restrict' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    kind: notificationKindEnum('kind').notNull(),
+    /** The values the text is written from (order number, amount, reason, …). No phone numbers. */
+    params: jsonb('params').notNull().default({}),
+    orderId: uuid('order_id').references(() => orders.id, { onDelete: 'restrict' }),
+    pushStatus: pushStatusEnum('push_status').notNull().default('pending'),
+    pushedAt: timestamp('pushed_at', { withTimezone: true }),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('notifications_user_idx').on(t.userId, t.id),
+    index('notifications_pending_idx')
+      .on(t.id)
+      .where(sql`push_status = 'pending'`),
+    index('notifications_reminder_idx').on(t.supplierId, t.userId, t.kind, t.createdAt),
+  ],
+);
+
+/** Expo push tokens of a person's phones. A token moves to whoever signed in on that phone last. */
+export const pushTokens = pgTable(
+  'push_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    token: text('token').notNull().unique(),
+    platform: text('platform').notNull(),
+    createdAt: createdAt(),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('push_tokens_user_idx').on(t.userId)],
 );

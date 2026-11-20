@@ -23,6 +23,9 @@ import { serviceAreaRoutes } from './modules/service-areas/service-areas.routes'
 import { orderingRoutes, type Clock } from './modules/ordering/ordering.routes';
 import { deliveryRoutes } from './modules/delivery/delivery.routes';
 import { paymentRoutes } from './modules/payments/payments.routes';
+import { adminRoutes } from './modules/reports/admin.routes';
+import { PushDispatcher } from './modules/notifications/notifications.service';
+import { createPushProvider, type PushProvider } from './providers/push';
 
 export const API_VERSION = '0.1.0';
 
@@ -34,9 +37,20 @@ export interface AppDeps {
   otpProvider?: OtpProvider;
   /** Tests pass a fixed clock to check cut-off times; otherwise the real time. */
   clock?: Clock;
+  /** Tests pass their own push provider to read what was sent; otherwise chosen by PUSH_PROVIDER. */
+  pushProvider?: PushProvider | null;
 }
 
-export function createApp({ env, db, logger, otpProvider, clock }: AppDeps): Express {
+export type WtrDropApp = Express & { pushDispatcher: PushDispatcher };
+
+export function createApp({
+  env,
+  db,
+  logger,
+  otpProvider,
+  clock,
+  pushProvider,
+}: AppDeps): WtrDropApp {
   const app = express();
   const tokens = new TokenService(env.JWT_SECRET);
   const authDeps: AuthDeps = {
@@ -71,7 +85,7 @@ export function createApp({ env, db, logger, otpProvider, clock }: AppDeps): Exp
         'X-Request-Id',
         ADMIN_CLIENT_HEADER,
       ],
-      exposedHeaders: ['X-Request-Id', 'Idempotent-Replayed'],
+      exposedHeaders: ['X-Request-Id', 'Idempotent-Replayed', 'Content-Disposition'],
     }),
   );
   app.use(
@@ -92,6 +106,18 @@ export function createApp({ env, db, logger, otpProvider, clock }: AppDeps): Exp
     }),
   );
   app.use(express.json({ limit: '100kb' }));
+  // Messages written during a request are pushed once it has finished (outbox, Phase 7).
+  const dispatcher = new PushDispatcher(
+    db,
+    pushProvider === undefined ? createPushProvider(env) : pushProvider,
+  );
+  app.use((req, res, next) => {
+    if (req.method !== 'GET')
+      res.on('finish', () => {
+        dispatcher.kick().catch((err: unknown) => logger.warn({ err }, 'push dispatch failed'));
+      });
+    next();
+  });
   app.use(authenticate(tokens, (id) => sessionIsOpen(db, id)));
 
   const v1 = express.Router();
@@ -106,9 +132,10 @@ export function createApp({ env, db, logger, otpProvider, clock }: AppDeps): Exp
   v1.use(orderingRoutes(db, clock ?? (() => new Date())));
   v1.use(deliveryRoutes(db, clock ?? (() => new Date())));
   v1.use(paymentRoutes(db, clock ?? (() => new Date())));
+  v1.use(adminRoutes(db, clock ?? (() => new Date())));
   app.use('/api/v1', v1);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-  return app;
+  return Object.assign(app, { pushDispatcher: dispatcher });
 }

@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { addDays, istDate } from '@wtrdrop/shared';
 import { officeFromPage, staffPhone } from './api';
 import { ACCOUNTS, noHorizontalScroll, requestCode, type ProjectName } from './support';
@@ -54,9 +55,9 @@ async function axe() {
   ).toEqual([]);
 }
 
-async function nav(name: string) {
+async function nav(name: string, heading = name) {
   await page.getByRole('navigation').getByRole('link', { name, exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(name);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading);
 }
 
 test('first sign-in: SMS code, then create a password', async () => {
@@ -655,6 +656,174 @@ test('Customers: the owner imports opening balances from a CSV', async () => {
   await page.getByLabel('Search customers').fill(`Old Customer ${tag} One`);
   await page.getByRole('link', { name: `Old Customer ${tag} One` }).click();
   await expect(page.getByTestId('customer-balances')).toContainText('₹450');
+});
+
+test('Complaints: note one from a phone call, then resolve it', async () => {
+  const mary = `Mary Joseph ${tag}`;
+  await page.goto(`/customers/${maryId}`);
+  const section = page.getByRole('region', { name: 'Complaints' });
+  await expect(section.getByText('No complaints from this customer.')).toBeVisible();
+  await section.getByRole('button', { name: 'Note a complaint' }).click();
+  const note = page.getByRole('dialog', { name: 'Note a complaint' });
+  await note.getByLabel('Something else').check();
+  await note.getByRole('button', { name: 'Save complaint' }).click();
+  await expect(note.getByText('Write a few words.')).toBeVisible();
+  await note.getByLabel('Can count is wrong').check();
+  await note.getByLabel('Details (optional)').fill('Driver left 1 can, bill says 2');
+  await axe();
+  await note.getByRole('button', { name: 'Save complaint' }).click();
+  await expect(page.getByText('Complaint saved.')).toBeVisible();
+  await expect(section.getByRole('row', { name: /Can count is wrong/ })).toContainText('Open');
+
+  // Today shows it among the things to do; its button opens the Complaints page.
+  await nav('Today', 'Good morning');
+  const todo = page.getByTestId('attention');
+  await todo.getByRole('link', { name: /^Open: \d+ open complaints?$/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Complaints');
+  const row = page.getByRole('row', { name: new RegExp(mary) });
+  await expect(row).toContainText('Driver left 1 can, bill says 2');
+  await row.getByRole('button', { name: `Resolve “Can count is wrong” for ${mary}` }).click();
+  const res = page.getByRole('dialog', { name: 'Resolve' });
+  await res.getByRole('button', { name: 'Resolve and tell the customer' }).click();
+  await expect(res.getByText('Write a few words.')).toBeVisible();
+  await res.getByLabel('What was done?').fill('We checked the van. ₹40 taken off your bill.');
+  await shot('admin-complaint-resolve');
+  await axe();
+  await res.getByRole('button', { name: 'Resolve and tell the customer' }).click();
+  await expect(page.getByText(`Complaint resolved. ${mary} will be told.`)).toBeVisible();
+  await expect(page.getByRole('row', { name: new RegExp(mary) })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Resolved', exact: true }).click();
+  await expect(page.getByRole('row', { name: new RegExp(mary) })).toContainText(
+    'We checked the van.',
+  );
+  await axe();
+  await noHorizontalScroll(page);
+});
+
+test('Payments: remind a customer about dues, once a day', async () => {
+  const mary = `Mary Joseph ${tag}`;
+  // Setup through the API: Mary now owes ₹200 (the correction screen itself is tested above).
+  const office = await officeFromPage(page);
+  await office.post(`admin/customers/${maryId}/corrections`, {
+    balancePaise: 20000,
+    reason: 'Two cans from last week, not billed',
+  });
+  await nav('Payments');
+  const row = page.getByRole('row', { name: new RegExp(mary) });
+  await expect(row).toContainText('₹200');
+  await row.getByRole('button', { name: `Send ${mary} a reminder about dues` }).click();
+  await expect(page.getByText(`Reminder sent to ${mary}.`)).toBeVisible();
+  await expect(
+    row.getByRole('button', { name: `Send ${mary} a reminder about dues` }),
+  ).toBeDisabled();
+  await expect(row).toContainText('Reminded');
+  await axe();
+});
+
+test('Today: what needs attention, today so far, and each driver', async () => {
+  await nav('Today', 'Good morning');
+  await expect(page.getByRole('heading', { name: 'Needs your attention' })).toBeVisible();
+  const numbers = page.getByTestId('today-numbers');
+  await expect(numbers).toContainText('Orders');
+  await expect(numbers).toContainText('Money due');
+  // Asha's route from the Deliveries steps is listed with its stops.
+  const drivers = page.getByRole('region', { name: 'Drivers right now' }).last();
+  await expect(drivers.getByRole('row', { name: new RegExp(`Asha ${tag}`) })).toContainText(
+    'Checked',
+  );
+  await expect(page.getByText('made-up demo')).toHaveCount(0);
+  await shot('admin-today');
+  await axe();
+  await noHorizontalScroll(page);
+});
+
+test('Reports: the six reports, a CSV download and the activity log', async () => {
+  await nav('Reports');
+  await expect(page.getByRole('button', { name: 'Sales', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Last 30 days' }).click();
+  await expect(page.getByTestId('report-table')).toBeVisible();
+  await expect(page.getByTestId('report-table').locator('tfoot')).toContainText('Total');
+  await shot('admin-reports');
+  await axe();
+  const [file] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download CSV' }).click(),
+  ]);
+  expect(file.suggestedFilename()).toMatch(
+    /^wtrdrop-sales-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}\.csv$/,
+  );
+  const text = readFileSync((await file.path())!, 'utf8');
+  expect(text.startsWith('﻿date,deliveries,cans,sales_paise')).toBe(true);
+
+  await page.getByRole('button', { name: 'Dues', exact: true }).click();
+  await expect(page.getByRole('row', { name: new RegExp(`Mary Joseph ${tag}`) })).toContainText(
+    '₹200',
+  );
+  await expect(page.getByTestId('dues-ageing')).toContainText('How long dues are owed');
+  await page.getByRole('button', { name: 'Cans with customers' }).click();
+  await expect(page.getByTestId('report-table')).toBeVisible();
+  await page.getByRole('button', { name: 'Delivery staff', exact: true }).click();
+  await expect(page.getByRole('row', { name: new RegExp(`Asha ${tag}`) }).first()).toContainText(
+    'Checked',
+  );
+  await page.getByRole('button', { name: 'Deliveries', exact: true }).click();
+  await expect(page.getByTestId('report-facts')).toContainText('Nobody home');
+  await page.getByRole('button', { name: 'Stock', exact: true }).click();
+  await expect(page.getByTestId('report-facts')).toContainText('All our cans');
+  await axe();
+
+  await page.getByRole('button', { name: 'Activity log' }).click();
+  const log = page.getByTestId('activity');
+  await expect(log).toContainText('Balances corrected');
+  await page.getByRole('combobox', { name: /^What/ }).selectOption('complaint');
+  await expect(log).toContainText('Complaint resolved');
+  await expect(log).not.toContainText('Balances corrected');
+  const resolved = log.getByRole('row', { name: /Complaint resolved/ }).first();
+  await resolved.getByText('Show').click();
+  await expect(resolved).toContainText('After');
+  await shot('admin-activity');
+  await axe();
+  await noHorizontalScroll(page);
+});
+
+test('Settings: business details and rules, changed only by the owner', async () => {
+  await nav('Settings');
+  const details = page.getByRole('region', { name: 'Business details' });
+  const rules = page.getByRole('region', { name: 'Business rules' });
+  await expect(rules.getByLabel('Deposit per can (₹)')).toHaveValue('150');
+  if (!me.owner) {
+    await expect(details.getByText('Only the owner can change these.')).toBeVisible();
+    await expect(details.getByLabel('Business name')).toBeDisabled();
+    await expect(rules.getByLabel('Deposit per can (₹)')).toBeDisabled();
+    await expect(rules.getByRole('button', { name: 'Save rules' })).toHaveCount(0);
+    await axe();
+    return;
+  }
+  await details.getByLabel('GSTIN (optional)').fill('32ABCDE1234');
+  await details.getByRole('button', { name: 'Save details' }).click();
+  await expect(details.getByRole('alert')).toHaveText(
+    'That GSTIN is not valid. Check the 15 characters.',
+  );
+  await details.getByLabel('GSTIN (optional)').fill('32abcde1234f1z5');
+  await details.getByRole('button', { name: 'Save details' }).click();
+  await expect(details.getByText('Business details saved.')).toBeVisible();
+  await expect(details.getByLabel('GSTIN (optional)')).toHaveValue('32ABCDE1234F1Z5');
+
+  await rules.getByLabel('Customer help phone').fill('98470');
+  await rules.getByRole('button', { name: 'Save rules' }).click();
+  await expect(rules.getByLabel('Customer help phone')).toHaveAttribute('aria-invalid', 'true');
+  await rules.getByLabel('Customer help phone').fill('9847012345');
+  await rules.getByRole('button', { name: 'Save rules' }).click();
+  await expect(rules.getByText('Business rules saved.')).toBeVisible();
+  await shot('admin-business-settings');
+  await axe();
+  await noHorizontalScroll(page);
+  // The change is in the activity log.
+  await page.goto('/reports?r=activity');
+  await expect(page.getByTestId('activity')).toContainText('Business rules changed');
 });
 
 test('Settings: only the owner manages office accounts', async () => {

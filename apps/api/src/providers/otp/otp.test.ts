@@ -26,8 +26,21 @@ describe('OTP provider configuration', () => {
         OTP_PROVIDER: 'msg91',
         MSG91_AUTH_KEY: 'k',
         MSG91_TEMPLATE_ID: 't',
+        PUSH_PROVIDER: 'expo',
       }),
     ).not.toThrow();
+  });
+
+  it('refuses the development push outbox in production', () => {
+    const prod = {
+      ...base,
+      NODE_ENV: 'production',
+      OTP_PROVIDER: 'msg91',
+      MSG91_AUTH_KEY: 'k',
+      MSG91_TEMPLATE_ID: 't',
+    };
+    expect(() => loadEnv(prod)).toThrow(/PUSH_PROVIDER/);
+    expect(() => loadEnv({ ...prod, PUSH_PROVIDER: 'none' })).not.toThrow();
   });
 });
 

@@ -13,6 +13,7 @@ import { ErrorState, Skeleton } from '../../components/States';
 import { StatusChip } from '../../components/StatusChip';
 import { Text } from '../../components/Text';
 import { areaLabel, useAccount, useProfile } from '../../lib/customer';
+import { useMessages } from '../../lib/help';
 import { errorText } from '../../lib/errors';
 import { orderNo, quoteFor, useMyOrders, useOrderOptions, windowLabel } from '../../lib/orders';
 import { STATUS_LOOK } from '../../lib/status';
@@ -28,6 +29,8 @@ export default function CustomerHome() {
   const options = useOrderOptions();
   const orders = useMyOrders();
   const account = useAccount();
+  const messages = useMessages();
+  const unread = messages.data?.unread ?? 0;
   const acc = account.data;
   const o = options.data;
   const address = profile.data?.addresses.find((a) => a.id === o?.addressId);
@@ -117,12 +120,27 @@ export default function CustomerHome() {
         </View>
       ) : null}
       {acc ? (
-        <Button
-          variant="secondary"
-          compact
-          label={t('statement.open')}
-          onPress={() => router.push('/(customer)/statement')}
-        />
+        <View style={styles.tiles}>
+          <View style={styles.flex}>
+            <Button
+              variant="secondary"
+              compact
+              label={t('statement.open')}
+              onPress={() => router.push('/(customer)/statement')}
+            />
+          </View>
+          <View style={styles.flex}>
+            <Button
+              variant={unread > 0 ? 'primary' : 'secondary'}
+              compact
+              label={unread > 0 ? t('messages.openNew', { count: unread }) : t('messages.open')}
+              accessibilityLabel={
+                unread > 0 ? t('messages.openNewLong', { count: unread }) : t('messages.open')
+              }
+              onPress={() => router.push('/(customer)/messages')}
+            />
+          </View>
+        </View>
       ) : null}
 
       {open.map((x) => {

@@ -11,23 +11,28 @@ import { latestCode } from './support';
 export interface Office {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;
+  patch<T>(path: string, body: unknown): Promise<T>;
   dispose(): Promise<void>;
 }
 
 const OFFICE_PHONE = '9847000003'; // seeded by apps/api e2e-server
+const OWNER_PHONE = '9847000001';
 const PASSWORD = 'tea at the depot 7';
 
-export async function officeApi(): Promise<Office> {
+/** The owner, for the few settings only the owner may change. */
+export const ownerApi = () => officeApi(OWNER_PHONE);
+
+export async function officeApi(phone = OFFICE_PHONE): Promise<Office> {
   const ctx: APIRequestContext = await request.newContext({
     baseURL: `http://localhost:${API_PORT}/api/v1/`,
     extraHTTPHeaders: { 'X-WtrDrop-Client': 'admin' },
   });
   const asked = Date.now() - 1000;
-  expect((await ctx.post('auth/otp/request', { data: { phone: OFFICE_PHONE } })).ok()).toBe(true);
-  const code = await latestCode(OFFICE_PHONE, asked);
+  expect((await ctx.post('auth/otp/request', { data: { phone } })).ok()).toBe(true);
+  const code = await latestCode(phone, asked);
   const v = await (
     await ctx.post('auth/otp/verify', {
-      data: { app: 'admin', phone: OFFICE_PHONE, code, password: PASSWORD },
+      data: { app: 'admin', phone, code, password: PASSWORD },
     })
   ).json();
   let token: string = v.accessToken;
@@ -46,6 +51,7 @@ export async function officeApi(): Promise<Office> {
   return {
     get: async (path) => read(await ctx.get(path, { headers: auth() }), path),
     post: async (path, body) => read(await ctx.post(path, { headers: auth(), data: body }), path),
+    patch: async (path, body) => read(await ctx.patch(path, { headers: auth(), data: body }), path),
     dispose: () => ctx.dispose(),
   };
 }

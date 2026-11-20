@@ -33,6 +33,7 @@ import {
 } from '../../db/schema';
 import { AppError, errors } from '../../lib/errors';
 import { recordAudit } from '../../lib/audit';
+import { customerUserId, queueNotification } from '../notifications/notifications.service';
 import type { TenantContext } from '../../lib/context';
 import { orderSettings } from '../ordering/catalog.service';
 import { writeHistory } from '../ordering/orders.service';
@@ -172,10 +173,17 @@ export async function startTrip(
     const t = await ownTrip(tx, ctx, tripId);
     if (t.status !== 'planned') return; // a repeat from the offline queue
     const stops = await tx
-      .select({ id: orders.id, status: orders.status })
+      .select({
+        id: orders.id,
+        status: orders.status,
+        orderNo: orders.orderNo,
+        qty: orders.totalQty,
+        userId: customers.userId,
+      })
       .from(orders)
+      .innerJoin(customers, eq(customers.id, orders.customerId))
       .where(and(eq(orders.tripId, t.id), eq(orders.status, 'ASSIGNED')))
-      .for('update');
+      .for('update', { of: orders });
     if (!stops.length) throw conflict('NO_STOPS', 'There are no stops on this route.');
     await tx
       .update(trips)
@@ -190,11 +198,19 @@ export async function startTrip(
           stops.map((s) => s.id),
         ),
       );
-    for (const s of stops)
+    for (const s of stops) {
       await writeHistory(tx, ctx.supplierId, s.id, 'ASSIGNED', 'OUT_FOR_DELIVERY', {
         userId: ctx.userId,
         role: ctx.role,
       });
+      await queueNotification(tx, {
+        supplierId: ctx.supplierId,
+        userId: s.userId,
+        kind: 'out_for_delivery',
+        params: { orderNo: s.orderNo, cans: s.qty },
+        orderId: s.id,
+      });
+    }
     await moveStock(tx, {
       supplierId: ctx.supplierId,
       from: ['depot', 'full'],
@@ -391,6 +407,15 @@ export async function deliver(
         paidPaise: paid,
       },
     });
+    const userId = await customerUserId(tx, c.id);
+    if (userId)
+      await queueNotification(tx, {
+        supplierId: ctx.supplierId,
+        userId,
+        kind: 'delivered',
+        params: { orderNo: o.orderNo, cans: input.full, amountPaise: paid, duePaise: balanceAfter },
+        orderId: o.id,
+      });
     return a!;
   });
 }
@@ -445,6 +470,15 @@ export async function notDelivered(
       entityId: o.id,
       after: { reason: input.reason, note: input.note ?? null },
     });
+    const userId = await customerUserId(tx, o.customerId);
+    if (userId)
+      await queueNotification(tx, {
+        supplierId: ctx.supplierId,
+        userId,
+        kind: 'not_delivered',
+        params: { orderNo: o.orderNo, reason: input.reason },
+        orderId: o.id,
+      });
     return a!;
   });
 }

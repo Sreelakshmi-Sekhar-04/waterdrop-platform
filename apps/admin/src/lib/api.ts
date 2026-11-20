@@ -95,6 +95,23 @@ export async function call<T>(
   return read<T>(res);
 }
 
+/** Downloads a file (a CSV report) with the session, and hands it to the browser to save. */
+export async function download(path: string, fallbackName: string): Promise<void> {
+  let res = await raw(path);
+  if (res.status === 401 && (await refreshAccess())) res = await raw(path);
+  if (!res.ok) await read(res);
+  const name =
+    /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 /** Calls that need no session (sign-in steps). */
 export async function publicCall<T>(path: string, body: unknown): Promise<T> {
   return read<T>(await raw(path, { method: 'POST', body: JSON.stringify(body) }, false));
