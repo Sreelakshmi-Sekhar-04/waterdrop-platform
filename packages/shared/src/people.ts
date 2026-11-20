@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { languageSchema } from './schemas';
 
 /** Version of the privacy notice shown at sign-up (DPDP Act). Bump when the text changes. */
-export const PRIVACY_NOTICE_VERSION = '2026-11-v1';
+export const PRIVACY_NOTICE_VERSION = '2026-11-v2';
 
 const text = (max: number) => z.string().trim().min(1, 'Required').max(max);
 

@@ -23,6 +23,7 @@ const LIVE_SCREENS = new Set([
   '/help',
   '/report',
   '/messages',
+  '/delete-account',
 ]);
 
 /**

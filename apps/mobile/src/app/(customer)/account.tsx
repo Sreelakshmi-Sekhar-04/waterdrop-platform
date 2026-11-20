@@ -147,6 +147,15 @@ export default function Account() {
             label={t('account.signOut')}
             onPress={() => void signOut().then(() => router.replace('/'))}
           />
+          <Pressable
+            accessibilityRole="button"
+            style={styles.link}
+            onPress={() => router.push('/(customer)/delete-account')}
+          >
+            <Text variant="label" color={colors.warning}>
+              {t('account.delete')}
+            </Text>
+          </Pressable>
         </>
       ) : null}
     </Screen>

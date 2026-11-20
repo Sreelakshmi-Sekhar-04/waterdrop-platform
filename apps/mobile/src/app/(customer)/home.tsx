@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { registerForPush } from '../../lib/push';
 import { colors, spacing } from '@wtrdrop/design-tokens';
 import { TERMINAL_STATUSES, formatINR } from '@wtrdrop/shared';
 import { Button } from '../../components/Button';
@@ -36,6 +38,10 @@ export default function CustomerHome() {
   const address = profile.data?.addresses.find((a) => a.id === o?.addressId);
   const open = orders.data?.filter((x) => !TERMINAL_STATUSES.includes(x.status)) ?? [];
   const next = o?.windows[0];
+  // Keeps this phone's push token current once the customer has allowed messages.
+  useEffect(() => {
+    void registerForPush({ ask: false });
+  }, []);
 
   return (
     <Screen nav={<CustomerNav />}>

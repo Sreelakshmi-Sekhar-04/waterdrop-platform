@@ -11,6 +11,7 @@ import {
 import * as Crypto from 'expo-crypto';
 import type { Role } from '@wtrdrop/shared';
 import { api, API_URL, ApiError, setTokenSource } from './api';
+import { unregisterPush } from './push';
 import { KEYS, secure } from './storage';
 
 /**
@@ -123,6 +124,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return loadMe();
       },
       signOut: async () => {
+        // While the session is still open, so the server takes this phone's token away.
+        await unregisterPush();
         try {
           await api('/auth/sign-out', { method: 'POST', body: {} });
         } catch {

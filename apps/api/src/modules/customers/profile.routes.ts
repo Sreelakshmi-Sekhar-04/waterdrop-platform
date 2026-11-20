@@ -21,6 +21,7 @@ import {
   updateAddress,
   updateOwnProfile,
 } from './customers.service';
+import { deleteOwnAccount, deletionCheck } from './account-deletion.service';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -75,6 +76,18 @@ export function profileRoutes(db: Database): Router {
     const ctx = tenant(req);
     const { id } = parse(idParam, req.params);
     await archiveAddress(db, ctx, await ownCustomerId(db, ctx), id);
+    res.json({ ok: true });
+  });
+
+  // Account deletion (ADR 0007): what blocks it, then the deletion itself. The app signs out after.
+  r.get('/customer/account/deletion', customer, async (req, res) => {
+    const ctx = tenant(req);
+    res.json(await deletionCheck(db, ctx, await ownCustomerId(db, ctx)));
+  });
+  r.post('/customer/account/delete', customer, async (req, res) => {
+    const ctx = tenant(req);
+    parse(z.object({ confirm: z.literal(true) }), req.body);
+    await deleteOwnAccount(db, ctx, await ownCustomerId(db, ctx));
     res.json({ ok: true });
   });
   return r;

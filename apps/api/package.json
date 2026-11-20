@@ -12,7 +12,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env src/db/migrate.ts",
     "db:seed": "tsx --env-file-if-exists=.env src/db/seed.ts",
-    "e2e:server": "tsx src/e2e-server.ts"
+    "e2e:server": "tsx src/e2e-server.ts",
+    "perf": "tsx scripts/perf.ts",
+    "check:integrity": "tsx --env-file-if-exists=.env src/ops/check-integrity.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

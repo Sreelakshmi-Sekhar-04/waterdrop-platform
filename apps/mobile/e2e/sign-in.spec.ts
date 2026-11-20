@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { fitsPhoneWidth, signInWithCode, tapPin } from './support';
+import { fitsPhoneWidth, signInWithCode, signUpCustomer, tapPin } from './support';
 
 test.use({ geolocation: { latitude: 10.0159, longitude: 76.3419 }, permissions: ['geolocation'] });
 
@@ -104,4 +104,19 @@ test('a number with no staff account cannot use staff sign-in', async ({ page })
     page.getByText('This number is not registered as delivery staff. Please ask the office.'),
   ).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText('Choose a 4-digit PIN')).toHaveCount(0);
+});
+
+test('customer: deletes their account from Account and is signed out', async ({ page }) => {
+  await signUpCustomer(page, '9847333377', 'Leaving Soon');
+  await page.getByText('Account', { exact: true }).last().click();
+  await page.getByRole('button', { name: 'Delete my account' }).click();
+  await expect(page.getByText(/This cannot be undone/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/orders and payments stay with the supplier/)).toBeVisible();
+  await axe(page);
+  await fitsPhoneWidth(page);
+  await page.getByRole('button', { name: 'Delete my account' }).click();
+  // Back at the start, signed out.
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeVisible({ timeout: 15_000 });
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeVisible({ timeout: 30_000 });
 });

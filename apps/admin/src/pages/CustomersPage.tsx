@@ -15,7 +15,14 @@ import { errorText } from '../lib/errors';
 import { isOwner, useAuth } from '../lib/auth';
 import { OpeningImportDialog } from '../components/OpeningImportDialog';
 import { Dialog } from '../components/Dialog';
-import { LiveMessage, PageHeader, SearchField, TableWrap, maskPhone } from '../components/ui';
+import {
+  LiveMessage,
+  PageHeader,
+  SearchField,
+  TableWrap,
+  isDeletedPhone,
+  maskPhone,
+} from '../components/ui';
 
 interface Row {
   id: string;
@@ -100,9 +107,14 @@ export function CustomersPage() {
                   {rows.map((c) => (
                     <tr key={c.id}>
                       <th scope="row">
-                        <Link to={`/customers/${c.id}`}>{c.name ?? t('customers.noName')}</Link>
+                        <Link to={`/customers/${c.id}`}>
+                          {isDeletedPhone(c.phone)
+                            ? t('customers.deleted')
+                            : (c.name ?? t('customers.noName'))}
+                        </Link>
                         <span className="cell-note">
-                          {t(`customers.type.${c.type}`)} · {maskPhone(c.phone.slice(-4))}
+                          {t(`customers.type.${c.type}`)}
+                          {isDeletedPhone(c.phone) ? null : ` · ${maskPhone(c.phone.slice(-4))}`}
                         </span>
                       </th>
                       <td>{c.area ?? <span className="muted">{t('customers.noAddress')}</span>}</td>

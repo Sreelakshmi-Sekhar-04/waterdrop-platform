@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import { Text } from '../../components/Text';
 import { api } from '../../lib/api';
 import { errorText } from '../../lib/errors';
 import { orderNo, ordersKey, useOrder, windowLabel, type OrderDetail } from '../../lib/orders';
+import { registerForPush } from '../../lib/push';
 import { STATUS_LOOK } from '../../lib/status';
 
 type StepState = 'done' | 'current' | 'todo';
@@ -62,6 +63,10 @@ export default function OrderPlaced() {
   const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const order = useOrder(id);
+  // The moment "we'll tell you when it's on the way" makes sense: ask once for notifications.
+  useEffect(() => {
+    void registerForPush({ ask: true });
+  }, []);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

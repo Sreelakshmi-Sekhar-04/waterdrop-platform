@@ -116,6 +116,9 @@ export function SearchField({
   );
 }
 
+/** A customer who deleted their account keeps a placeholder phone, never a real number (ADR 0007). */
+export const isDeletedPhone = (phone: string) => phone.startsWith('deleted-');
+
 /** Shows only the last four digits of a phone number. */
 export function maskPhone(last4: string): string {
   return `•••• ${last4}`;

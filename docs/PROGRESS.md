@@ -6,11 +6,11 @@ Read this file first at the start of every Claude Code session. Update it at the
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 7: Admin and reports** (complete, waiting for review) |
-| Phase status | Phase 6 approved 20 Nov 2026 ("start Phase 7"). Phase 7 delivered 20 Nov on branch `phase-7-admin-reports` (built on `phase-6-payments`). **Waiting for Sreelakshmi's review** before Phase 8. |
-| Next step | Review the Phase 7 report below, then Phase 8 (hardening, performance, security and UAT, with the app builds and push registration). |
-| Coding started? | Yes. Do not start Phase 8 until Phase 7 is reviewed. |
-| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-7-admin-reports`. |
+| Current phase | **Phase 8: Hardening and release** (built and tested; waiting for review and outside accounts) |
+| Phase status | Phase 7 approved 20 Nov 2026 ("start Phase 8"). Phase 8 delivered 20 Nov on branch `phase-8-hardening` (built on `phase-7-admin-reports`). The code side of release is done; go-live waits for the owner's accounts, real UAT and approval. |
+| Next step | Owner: review the Phase 8 report; create the accounts in `docs/release/RELEASE-CHECKLIST.md` part B; choose hosting (D-18); hold the UAT session (`docs/release/UAT-SCRIPT.md`). Nothing is deployed or submitted without explicit approval. |
+| Coding started? | Yes. All 8 planned phases built. |
+| Repository | `github.com/Sreelakshmi-Sekhar-04/waterdrop-platform` (public). Work on branch `phase-8-hardening`. |
 | Docs location | Repo `docs/` is the source of truth from Phase 1. Project files `wtrdrop/docs/` hold a copy. |
 
 ## Key references
@@ -419,3 +419,57 @@ Defects found and fixed during Phase 7: (a) two identical complaints sent at the
 **11. Deviations from the original requirements** — dues reminders are push/in-app, not SMS (SMS needs DLT approval). Push registration on the phone moves to Phase 8 with the app builds. Both recorded in the change log.
 
 **12. Recommended next step** — Phase 8: hardening, performance, security and UAT with real users, plus the app builds (EAS) with push registration, real SMS once the DLT template is approved, and backups with a restore test.
+
+### Phase 8: Hardening and release (20 Nov 2026)
+
+**1. What was completed**
+- **Security regression** driven by the app's own route table: every one of the 90+ API routes is checked for the right 401/403 by role; owner-only routes refuse office admins; forged, signed-out and other-supplier tokens are refused; headers, CORS, body limit and clean error answers. A route added later without a role check fails the test.
+- **Performance** with a year of data (400 customers, 36,500 orders, 27,375 payments), a morning rush (300 customers at once for 50 cans) and 50 drivers syncing twice. Results in ADR 0007 and `perf-365.json`.
+- **Operations:** API server image (Dockerfile), migration runner fixed for the built layout, daily backup script, quarterly restore drill (run on the year of data), nightly data check command.
+- **Account deletion** in the app (Account → Delete my account), required by both stores and the DPDP Act, with the portal showing "Account deleted".
+- **Push messages on phones:** the app asks for notification permission after an order and registers the phone; removed on sign-out. Switches on once `eas init` adds the project id.
+- **Release setup:** EAS build profiles, version and build numbers, iOS export-compliance answer, unneeded Android storage permissions blocked; CI gains a dependency audit and an image build.
+- **Release documents** (`docs/release/`): release checklist, runbook, UAT script for the owner and staff, store listing (English and Malayalam) and privacy policy drafts.
+
+**2. Files created or changed**
+- API: `src/modules/customers/account-deletion.service.ts`, `profile.routes.ts`, `src/ops/{integrity,check-integrity}.ts`, `src/db/migrate.ts`, `scripts/perf.ts`, `Dockerfile`, `tsup.config.ts`, `package.json` (`perf`, `check:integrity`), `tsconfig.json`; tests `test/security.test.ts` (12), `test/account-deletion.test.ts` (4), `test/ops.test.ts` (1).
+- Shared: `people.ts` (privacy notice version 2026-11-v2).
+- Admin: `components/ui.tsx`, `pages/Customers{,Detail}Page.tsx`, locales.
+- Mobile: `(customer)/delete-account.tsx` (new), `account.tsx`, `home.tsx`, `placed.tsx`, `lib/push.ts` (new), `lib/session.tsx`, `components/RoleGate.tsx`, locales, `app.json`, `eas.json` (new), `package.json` (expo-notifications, expo-device), `e2e/sign-in.spec.ts`, `e2e/delivery.spec.ts`.
+- Repo: `.dockerignore`, `ops/backup.sh`, `ops/restore-drill.sh`, `.github/workflows/ci.yml`.
+- Docs: `docs/adr/0007-hardening-and-release.md`, `docs/release/*` (5 files), README, change log, this report.
+
+**3. Architecture and design decisions** — see ADR 0007. In short: deletion erases the person and keeps the business records, and only when nothing is outstanding; push permission is asked at the moment it makes sense and only on a real build; migrations run as a separate step before a new version; the managed database's backups come first, with our own dump and a quarterly restore drill as the second line; a nightly data check alerts when a ledger and a balance disagree.
+
+**4. APIs and database changes**
+- New: `GET /customer/account/deletion`, `POST /customer/account/delete`.
+- No database migration. Deleted users keep a placeholder phone (`deleted-<id>`) so the unique phone rule holds and the number can sign up again.
+
+**5. Tests executed** (all run on 20 Nov 2026 in the development container, PostgreSQL 16)
+- `pnpm lint`, `pnpm typecheck`, `prettier --check`, `pnpm check:i18n` (admin 923 texts, mobile 352).
+- `pnpm test`: design tokens 12, shared 57, API 159 in 14 files (17 new: route-table security 12, account deletion 4, data check 1). The 6 UAT workflows from Phase 7 still pass.
+- Admin Playwright: 60 (30 scenarios × desktop and phone). Mobile Playwright: 20 (1 new: a customer deletes their account and is signed out).
+- `expo export --platform android` bundle build; `expo config` resolves with the notifications plugin.
+- `scripts/perf.ts` with 365 days (about 7 minutes); the restore drill on that database; `pnpm audit --prod`; a secret scan of the git history; the production start of the built server (migrate, health, data check, clean stop) without Docker.
+
+**6. Actual test results** — all passed: 228 unit and integration tests, 60 admin browser tests, 20 mobile browser tests, translation check, Android bundle. Performance: reads p95 under 110 ms except the 365-day staff report (872 ms first run, 325 ms after); writes p95 157 ms; the rush accepted exactly 50 of 300 (p95 1.07 s); 1,000 sync requests saved 500 deliveries with none doubled; ledgers and the can pool add up. Restore drill: 25 MB, 3 s, data check OK. Audit: no high or critical advisory (one moderate, in a build-time Expo tool). Secret scan: clean.
+
+Defects found and fixed during Phase 8: (a) the built migration command looked for migrations in the wrong folder, so `node dist/db/migrate.js` would have failed on the server; fixed and checked in the image layout. (b) A mobile browser test could fail when the previous screen was still on the page during the back animation; it now matches the exact text.
+
+**7. Known defects and limitations**
+- Not run here because the workspace cannot install them: OWASP ZAP, k6, Docker itself (the image was checked by reproducing its layout), Maestro on a real phone. ZAP and a staging load run are on the release checklist; CI builds the image.
+- Performance was measured with the database on the same machine; production adds network time.
+- Push is untested on a real phone until an EAS project and a build exist.
+- A deleted account cannot be restored. Old orders keep the delivery address as it was (tax records).
+- Store texts, privacy policy and Malayalam wording are drafts. All business values are still DEMO until the owner enters real ones.
+- The branch has not been pushed (GitHub App still missing); a git bundle is in project files.
+
+**8. Security considerations** — every route's role check is now under test. Deletion is limited to the customer themself, needs an explicit confirm, closes all sessions at once and logs no personal details. The server refuses development SMS and push providers in production and needs a 32+ character secret. The server image runs as a non-root user. CI fails on a high or critical dependency advisory. No secrets in the repository or its history.
+
+**9. Pending decisions** — D-18 hosting provider (Mumbai). Before launch: the business name for the stores, support phone and email, privacy policy review, and how long order records are kept (proposed 8 years for tax law).
+
+**10. Recommendations** — start the slow items now: DLT registration and MSG91 template (2–4 weeks), Apple and Google developer accounts in the business's name, an Expo account. Choose the hosting provider so a staging server can run the UAT session on real phones.
+
+**11. Deviations from the original requirements** — ZAP and k6 replaced in this workspace by an in-process route-table test and an HTTP load script (ZAP still planned against staging). Store submission and real UAT not done: they need the owner's accounts and approval. Recorded in the change log.
+
+**12. Recommended next step** — the owner reviews this report, creates the accounts in the release checklist and chooses hosting. Then, with approval: staging deploy, UAT with the owner and 1–2 staff on preview builds, fixes from UAT, store submission.

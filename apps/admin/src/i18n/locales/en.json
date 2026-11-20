@@ -214,6 +214,8 @@
       "shop": "Shop"
     },
     "noName": "(no name yet)",
+    "deleted": "Account deleted",
+    "deletedNote": "The customer deleted their account; orders and payments are kept",
     "noAddress": "No address yet",
     "add": "+ Add customer",
     "addTitle": "Add a customer who phoned",
@@ -1110,6 +1112,7 @@
       "customer_balances_corrected": "Balances corrected",
       "customer_created_by_office": "Customer added by office",
       "customer_credit_limit": "Credit limit changed",
+      "customer_deleted": "Customer deleted their account",
       "customer_updated": "Customer changed",
       "customer_price_set": "Customer price set",
       "delivery_delivered": "Delivered",

@@ -246,7 +246,7 @@ test('Help: WhatsApp the business, report a problem, and read the answer in Mess
 
   const p = customer!.page;
   await p.getByRole('button', { name: 'Back' }).click();
-  await expect(p.getByText('Our cans with you')).toBeVisible({ timeout: 15_000 });
+  await expect(p.getByText('Our cans with you', { exact: true })).toBeVisible({ timeout: 15_000 });
   // The van left and delivered: two new messages wait on the home screen.
   await expect(p.getByRole('button', { name: 'Messages, 2 new messages' })).toBeVisible();
 

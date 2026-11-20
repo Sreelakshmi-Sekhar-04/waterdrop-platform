@@ -7,7 +7,7 @@ import { call } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { Dialog } from '../components/Dialog';
 import { CustomerComplaints } from '../components/Complaints';
-import { Chip, LiveMessage, PageHeader } from '../components/ui';
+import { Chip, LiveMessage, PageHeader, isDeletedPhone } from '../components/ui';
 import { CustomerLedgers } from '../components/CustomerLedgers';
 import { CustomerOrders, CustomerPrice } from '../components/CustomerOrders';
 
@@ -85,10 +85,13 @@ export function CustomerDetailPage() {
         <Link to="/customers">{t('customer.back')}</Link>
       </p>
       <PageHeader
-        title={c.name ?? t('customers.noName')}
+        title={isDeletedPhone(c.phone) ? t('customers.deleted') : (c.name ?? t('customers.noName'))}
         subtitle={
           <>
-            {`+91 ${c.phone.slice(3, 8)} ${c.phone.slice(8)}`} · {t(`customers.type.${c.type}`)}
+            {isDeletedPhone(c.phone)
+              ? t('customers.deletedNote')
+              : `+91 ${c.phone.slice(3, 8)} ${c.phone.slice(8)}`}{' '}
+            · {t(`customers.type.${c.type}`)}
             {c.status === 'disabled' ? <Chip tone="warning">{t('common.switchedOff')}</Chip> : null}
           </>
         }

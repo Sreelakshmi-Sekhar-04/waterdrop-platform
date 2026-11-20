@@ -214,7 +214,7 @@
     "welcomeBody": "Tell us your name so our delivery staff know who to ask for.",
     "nameLabel": "Your name",
     "privacyTitle": "Your privacy",
-    "privacyBody": "We use your phone number, name and address only to take and deliver your orders and to keep your can and payment records. We do not sell or share them for advertising. You can ask us to delete your account at any time.",
+    "privacyBody": "We use your phone number, name and address only to take and deliver your orders and to keep your can and payment records. We do not sell or share them for advertising. You can delete your account in the app at any time; your order and payment records are kept for the supplier's accounts, without your name or number.",
     "privacyAccept": "I agree to this privacy notice",
     "continue": "Continue"
   },
@@ -262,7 +262,8 @@
     "removeTitle": "Remove this address?",
     "removeBody": "\"{{label}}\" will no longer be offered for new orders.",
     "addAddress": "Add another address",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "delete": "Delete my account"
   },
   "errors": {
     "NETWORK": "No internet connection. Please check and try again.",
@@ -302,7 +303,10 @@
     "UNDO_EXPIRED": "It is too late to undo this. Ask the office to correct it.",
     "STOPS_LEFT": "Some stops are not done yet.",
     "NO_STOPS": "There are no stops on this route.",
-    "ROUTE_ALREADY_STARTED": "This route has already started."
+    "ROUTE_ALREADY_STARTED": "This route has already started.",
+    "ACCOUNT_HAS_BALANCES": "Cans, deposit or money are still to be settled. Please call us.",
+    "ACCOUNT_HAS_OPEN_ORDERS": "Some orders are not finished yet. Cancel them or wait for delivery.",
+    "ACCOUNT_HAS_OTHER_ROLES": "This number is also used for other work. Please ask the office."
   },
   "order": {
     "today": "Today",
@@ -391,5 +395,22 @@
     "none": "No messages yet. Delivery updates and answers from the office will appear here.",
     "new": "New",
     "openOrder": "See the order"
+  },
+  "deleteAccount": {
+    "title": "Delete my account",
+    "what": "Your name, phone number, addresses and messages will be erased and you will be signed out. This cannot be undone.",
+    "kept": "Your orders and payments stay with the supplier for their accounts, without your name or number.",
+    "firstSettle": "Before you can delete, please settle:",
+    "openOrders_one": "{{count}} order not finished yet",
+    "openOrders_other": "{{count}} orders not finished yet",
+    "cans_one": "{{count}} can with you to return",
+    "cans_other": "{{count}} cans with you to return",
+    "deposit": "Deposit of {{amount}} to be refunded",
+    "due": "{{amount}} still due",
+    "advance": "{{amount}} paid in advance to be refunded",
+    "otherRoles": "This number is also used for delivery or office work. Please ask the office.",
+    "callUs": "Call us and we will help you settle these.",
+    "confirm": "Delete my account",
+    "help": "Get help"
   }
 }
