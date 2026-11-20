@@ -3,3 +3,8 @@ export * from './order-status';
 export * from './can-ledger';
 export * from './money';
 export * from './schemas';
+export * from './people';
+export * from './ordering';
+export * from './delivery';
+export * from './payments';
+export * from './admin';

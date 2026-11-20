@@ -12,7 +12,19 @@ import { createApp } from '../src/app';
 import { loadEnv } from '../src/config/env';
 import { createDb, type DbHandle } from '../src/db/client';
 import { runMigrations } from '../src/db/migrate';
-import { suppliers, userRoles, users } from '../src/db/schema';
+import {
+  deliveryWindows,
+  productPrices,
+  products,
+  sessions,
+  settings,
+  suppliers,
+  userRoles,
+  users,
+} from '../src/db/schema';
+import { DEMO_SETTINGS } from '../src/modules/settings/settings.schema';
+import type { OtpProvider } from '../src/providers/otp';
+import type { PushMessage, PushProvider } from '../src/providers/push';
 import { createLogger } from '../src/lib/logger';
 import { TokenService } from '../src/lib/tokens';
 
@@ -33,6 +45,19 @@ export interface TestHarness {
   supplierA: string;
   supplierB: string;
   makeUser: (supplierId: string, role: Role) => Promise<TestUser>;
+  /** SMS codes "sent" during the test, newest last. Delivery is the only part replaced. */
+  sms: { phone: string; code: string; language: string }[];
+  lastCode: (phone: string) => string;
+  /** When set, the next send fails like a provider outage. */
+  failNextSend: { value: boolean };
+  /** Pushes "sent" during the test, oldest first. Delivery is the only part replaced. */
+  pushes: PushMessage[];
+  /** Set `now` to fix the time the ordering rules see; null = the real time. */
+  clock: { now: Date | null };
+  /** DEMO settings, the 20 L can at ₹40 and Morning/Afternoon/Evening windows (Mon–Sat, 100 cans). */
+  setupOrdering: (
+    supplierId: string,
+  ) => Promise<{ productId: string; windows: Record<string, string> }>;
   cleanup: () => Promise<void>;
 }
 
@@ -56,10 +81,47 @@ export async function createHarness(
     JWT_SECRET: TEST_JWT_SECRET,
     CORS_ORIGINS: 'http://localhost:5173',
     LOG_LEVEL: 'silent',
+    DEFAULT_SUPPLIER_SLUG: 'a',
+    // Every test request comes from 127.0.0.1; the per-network limit has its own test.
+    OTP_PER_IP_PER_HOUR: '100000',
     ...envOverrides,
   });
   const handle = createDb(databaseUrl);
-  const app = createApp({ env, db: handle.db, logger: createLogger('silent') });
+  const sms: TestHarness['sms'] = [];
+  const failNextSend = { value: false };
+  const otpProvider: OtpProvider = {
+    name: 'test-capture',
+    send: async (m) => {
+      if (failNextSend.value) {
+        failNextSend.value = false;
+        const { OtpDeliveryError } = await import('../src/providers/otp');
+        throw new OtpDeliveryError('test outage');
+      }
+      sms.push(m);
+    },
+  };
+  const clock: TestHarness['clock'] = { now: null };
+  const pushes: PushMessage[] = [];
+  const pushProvider: PushProvider = {
+    name: 'test',
+    send: async (messages) => {
+      pushes.push(...messages);
+      return messages.map((m) => (m.token.includes('Gone') ? 'gone' : 'sent'));
+    },
+  };
+  const app = createApp({
+    pushProvider,
+    env,
+    db: handle.db,
+    logger: createLogger('silent'),
+    otpProvider,
+    clock: () => clock.now ?? new Date(),
+  });
+  const lastCode = (phone: string) => {
+    const m = [...sms].reverse().find((x) => x.phone === phone);
+    if (!m) throw new Error(`no SMS sent to ${phone}`);
+    return m.code;
+  };
   const tokens = new TokenService(TEST_JWT_SECRET);
 
   const [a] = await handle.db
@@ -80,13 +142,77 @@ export async function createHarness(
       .values({ phone, name: `${role} ${phoneSeq}` })
       .returning({ id: users.id });
     await handle.db.insert(userRoles).values({ userId: u!.id, supplierId, role });
+    // A real session row: access tokens only work while their session is open.
+    const [s] = await handle.db
+      .insert(sessions)
+      .values({
+        userId: u!.id,
+        supplierId,
+        role,
+        familyId: randomUUID(),
+        refreshTokenHash: randomBytes(32).toString('hex'),
+        expiresAt: new Date(Date.now() + 3600_000),
+      })
+      .returning({ id: sessions.id });
     const token = await tokens.issueAccessToken({
       userId: u!.id,
       supplierId,
       role,
-      sessionId: randomUUID(),
+      sessionId: s!.id,
     });
     return { userId: u!.id, supplierId, role, token };
+  };
+
+  const setupOrdering: TestHarness['setupOrdering'] = async (supplierId) => {
+    await handle.db
+      .insert(settings)
+      .values(
+        Object.entries(DEMO_SETTINGS)
+          .filter(([, v]) => v !== null)
+          .map(([key, value]) => ({ supplierId, key, value })),
+      )
+      .onConflictDoNothing();
+    const [p] = await handle.db
+      .insert(products)
+      .values({ supplierId, sku: 'CAN-20L', nameEn: '20 litre water can', nameMl: '20 ലിറ്റർ ക്യാൻ' })
+      .returning({ id: products.id });
+    await handle.db
+      .insert(productPrices)
+      .values({ supplierId, productId: p!.id, pricePaise: 4000, validFrom: '2026-01-01' });
+    const days = [1, 2, 3, 4, 5, 6];
+    const rows = await handle.db
+      .insert(deliveryWindows)
+      .values([
+        {
+          supplierId,
+          nameEn: 'Morning',
+          nameMl: 'രാവിലെ',
+          startTime: '07:00',
+          endTime: '11:00',
+          capacityCans: 100,
+          daysOfWeek: days,
+        },
+        {
+          supplierId,
+          nameEn: 'Afternoon',
+          nameMl: 'ഉച്ചയ്ക്ക്',
+          startTime: '11:00',
+          endTime: '15:00',
+          capacityCans: 100,
+          daysOfWeek: days,
+        },
+        {
+          supplierId,
+          nameEn: 'Evening',
+          nameMl: 'വൈകുന്നേരം',
+          startTime: '15:00',
+          endTime: '19:00',
+          capacityCans: 100,
+          daysOfWeek: days,
+        },
+      ])
+      .returning({ id: deliveryWindows.id, name: deliveryWindows.nameEn });
+    return { productId: p!.id, windows: Object.fromEntries(rows.map((r) => [r.name, r.id])) };
   };
 
   const cleanup = async () => {
@@ -97,7 +223,21 @@ export async function createHarness(
     await c.end();
   };
 
-  return { app, handle, tokens, supplierA: a!.id, supplierB: b!.id, makeUser, cleanup };
+  return {
+    app,
+    handle,
+    tokens,
+    supplierA: a!.id,
+    supplierB: b!.id,
+    makeUser,
+    sms,
+    pushes,
+    lastCode,
+    failNextSend,
+    clock,
+    setupOrdering,
+    cleanup,
+  };
 }
 
 export const bearer = (u: TestUser) => ({ Authorization: `Bearer ${u.token}` });

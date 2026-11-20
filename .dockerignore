@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/dist-check
+**/.expo
+**/.e2e
+**/.dev-outbox
+**/test-results
+**/playwright-report
+**/.env
+**/.env.*
+!**/.env.example
+.git
+apps/mobile
+apps/admin

@@ -1,18 +1,50 @@
 import type { ReactNode } from 'react';
-import { Redirect } from 'expo-router';
+import { Redirect, usePathname } from 'expo-router';
 import type { Role } from '@wtrdrop/shared';
-import { homeFor, useSession } from '../lib/session';
+import { homeFor, useSessionState } from '../lib/session';
 import { PreviewBanner } from './PreviewBanner';
+import { Skeleton } from './States';
+import { Screen } from './Screen';
+
+/** Screens already connected to the server. All others still show Phase 2 demo data. */
+const LIVE_SCREENS = new Set([
+  '/account',
+  '/address',
+  '/profile-setup',
+  '/home',
+  '/order',
+  '/placed',
+  '/orders',
+  '/route',
+  '/deliver',
+  '/not-delivered',
+  '/day-end',
+  '/statement',
+  '/help',
+  '/report',
+  '/messages',
+  '/delete-account',
+]);
 
 /**
  * Keeps each role inside its own screens. Real permission checks always happen
  * on the server; this only stops the app from showing the wrong navigation.
- * Development builds may open the screens without signing in, clearly marked as a preview.
+ * With EXPO_PUBLIC_PREVIEW=1 in a development build, the screens open without
+ * signing in for design review, clearly marked as a preview.
  */
 export function RoleGate({ role, children }: { role: Role; children: ReactNode }) {
-  const session = useSession();
+  const { status, session } = useSessionState();
+  const path = usePathname();
+  const preview = __DEV__ && process.env.EXPO_PUBLIC_PREVIEW === '1';
+  if (status === 'loading') {
+    return (
+      <Screen>
+        <Skeleton lines={4} />
+      </Screen>
+    );
+  }
   if (!session) {
-    if (__DEV__) {
+    if (preview && !LIVE_SCREENS.has(path)) {
       return (
         <>
           <PreviewBanner />
@@ -26,5 +58,10 @@ export function RoleGate({ role, children }: { role: Role; children: ReactNode }
     const home = homeFor(session.role);
     return <Redirect href={home ?? '/'} />;
   }
-  return <>{children}</>;
+  return (
+    <>
+      {LIVE_SCREENS.has(path) ? null : <PreviewBanner />}
+      {children}
+    </>
+  );
 }

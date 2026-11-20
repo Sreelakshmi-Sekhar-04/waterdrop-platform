@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { Link, Redirect } from 'expo-router';
+import { Link, Redirect, router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { colors, spacing } from '@wtrdrop/design-tokens';
 import { Button } from '../components/Button';
@@ -7,27 +7,54 @@ import { LogoMark } from '../components/Logo';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { setLanguage } from '../i18n';
-import { homeFor, useSession } from '../lib/session';
+import { useEffect, useState } from 'react';
+import { Pressable } from 'react-native';
+import { homeFor, useSessionState } from '../lib/session';
+import { KEYS, secure } from '../lib/storage';
 
-/** First screen: brand, one-tap language choice, then sign-in (Phase 3). */
+const PREVIEW_LINKS: { href: Href; label: string }[] = [
+  { href: '/(customer)/home', label: 'Customer · Home' },
+  { href: '/(customer)/order', label: 'Customer · Order' },
+  { href: '/(customer)/placed', label: 'Customer · Order placed' },
+  { href: '/(customer)/orders', label: 'Customer · My orders' },
+  { href: '/(customer)/help', label: 'Customer · Help' },
+  { href: '/(staff)/route', label: "Staff · Today's route" },
+  { href: { pathname: '/(staff)/deliver', params: { stop: '10' } }, label: 'Staff · Delivered' },
+  {
+    href: { pathname: '/(staff)/not-delivered', params: { stop: '10' } },
+    label: "Staff · Couldn't deliver",
+  },
+  { href: '/states', label: 'Loading, empty and error states' },
+];
+
+/** First screen: brand, one-tap language choice, then sign-in. */
 export default function Welcome() {
   const { t, i18n } = useTranslation();
-  const session = useSession();
+  const { status, session } = useSessionState();
+  const [staffPin, setStaffPin] = useState<boolean | null>(null);
+  useEffect(() => {
+    void secure.get(KEYS.staffPinSet).then((v) => setStaffPin(v === '1'));
+  }, []);
+  if (status === 'loading' || staffPin === null) return null;
   const home = session ? homeFor(session.role) : null;
   if (home) return <Redirect href={home} />;
+  // A staff phone with a PIN goes straight to the PIN screen each morning.
+  if (staffPin) return <Redirect href="/(auth)/pin" />;
 
   return (
     <Screen
       footer={
         <>
-          <Button
-            label={t('welcome.continue')}
-            disabled
-            accessibilityHint={t('welcome.signInLater')}
-          />
-          <Text variant="caption" muted style={styles.center}>
-            {t('welcome.signInLater')}
-          </Text>
+          <Button label={t('welcome.continue')} onPress={() => router.push('/(auth)/phone')} />
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/(auth)/phone', params: { app: 'staff' } })}
+            style={styles.staffLink}
+          >
+            <Text variant="label" color={colors.primary} style={styles.center}>
+              {t('welcome.staffSignIn')}
+            </Text>
+          </Pressable>
         </>
       }
     >
@@ -39,7 +66,7 @@ export default function Welcome() {
             Drop
           </Text>
         </Text>
-        <Text variant="body" muted style={styles.center}>
+        <Text muted style={styles.center}>
           {t('welcome.tagline')}
         </Text>
       </View>
@@ -64,21 +91,18 @@ export default function Welcome() {
         </View>
       </View>
 
-      {__DEV__ ? (
-        <View style={styles.dev}>
+      {__DEV__ && process.env.EXPO_PUBLIC_PREVIEW === '1' ? (
+        <View style={styles.dev} testID="dev-preview">
           <Text variant="label" muted>
             {t('welcome.devPreview')}
           </Text>
-          <Link href="/(customer)/home" style={styles.link}>
-            <Text variant="label" color={colors.primary}>
-              Customer · Home
-            </Text>
-          </Link>
-          <Link href="/(staff)/route" style={styles.link}>
-            <Text variant="label" color={colors.primary}>
-              Staff · Today's route
-            </Text>
-          </Link>
+          {PREVIEW_LINKS.map((l) => (
+            <Link key={l.label} href={l.href} style={styles.link}>
+              <Text variant="label" color={colors.primary}>
+                {l.label}
+              </Text>
+            </Link>
+          ))}
         </View>
       ) : null}
     </Screen>
@@ -90,6 +114,7 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   row: { flexDirection: 'row', gap: spacing.md },
   flex: { flex: 1 },
-  dev: { gap: spacing.sm, marginTop: spacing.xl },
-  link: { paddingVertical: spacing.md },
+  dev: { gap: spacing.xs, marginTop: spacing.xl },
+  link: { paddingVertical: spacing.sm },
+  staffLink: { minHeight: 48, justifyContent: 'center' },
 });

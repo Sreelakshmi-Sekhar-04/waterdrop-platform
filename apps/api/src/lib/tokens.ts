@@ -1,7 +1,7 @@
 /**
- * Short-lived access tokens (JWT, HS256). Refresh tokens and OTP sign-in are
- * built in Phase 3 on top of this. There is no way to obtain a token without
- * a real session: no test or demo login exists in the API.
+ * Short-lived access tokens (JWT, HS256), plus single-purpose step tokens
+ * (e.g. "set your admin password", valid 10 minutes). Access tokens are only
+ * issued for a real session row; no test or demo login exists in the API.
  */
 import { SignJWT, jwtVerify } from 'jose';
 import { ROLES, type Role } from '@wtrdrop/shared';
@@ -25,6 +25,13 @@ const claimsSchema = z.object({
   sid: z.string().uuid(),
 });
 
+const stepSchema = z.object({
+  sub: z.string().uuid(),
+  sup: z.string().uuid(),
+  role: z.enum(ROLES),
+  pur: z.string(),
+});
+
 export class TokenService {
   private readonly key: Uint8Array;
   constructor(secret: string) {
@@ -41,6 +48,36 @@ export class TokenService {
       .setIssuedAt()
       .setExpirationTime(`${ttlSeconds}s`)
       .sign(this.key);
+  }
+
+  /** A short token that only allows one follow-up step, e.g. setting the first admin password. */
+  async issueStepToken(purpose: string, c: Omit<AccessClaims, 'sessionId'>, ttlSeconds = 600) {
+    return new SignJWT({ sup: c.supplierId, role: c.role, pur: purpose })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setSubject(c.userId)
+      .setIssuer(ISSUER)
+      .setAudience(`${AUDIENCE}:step`)
+      .setIssuedAt()
+      .setExpirationTime(`${ttlSeconds}s`)
+      .sign(this.key);
+  }
+
+  async verifyStepToken(
+    purpose: string,
+    token: string,
+  ): Promise<Omit<AccessClaims, 'sessionId'> | null> {
+    try {
+      const { payload } = await jwtVerify(token, this.key, {
+        issuer: ISSUER,
+        audience: `${AUDIENCE}:step`,
+        algorithms: ['HS256'],
+      });
+      const c = stepSchema.parse(payload);
+      if (c.pur !== purpose) return null;
+      return { userId: c.sub, supplierId: c.sup, role: c.role };
+    } catch {
+      return null;
+    }
   }
 
   /** Returns the claims, or null for any invalid, expired or tampered token. */

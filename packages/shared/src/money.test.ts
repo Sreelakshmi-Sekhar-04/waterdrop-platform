@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatINR, rupeesToPaise } from './money';
-import { indianMobileSchema } from './schemas';
+import { indianMobileSchema, normaliseMobileInput } from './schemas';
 
 describe('money', () => {
   it('formats paise with Indian grouping', () => {
@@ -27,5 +27,18 @@ describe('indian mobile numbers', () => {
     for (const bad of ['12345', '5847012345', '+14155550123', '98470123456']) {
       expect(indianMobileSchema.safeParse(bad).success).toBe(false);
     }
+  });
+});
+
+describe('mobile number input cleaning', () => {
+  it.each([
+    ['98470 12345', '9847012345'],
+    ['+91 98470-12345', '9847012345'],
+    ['919847012345', '9847012345'],
+    ['09847012345', '9847012345'],
+    ['98470123456789', '9847012345'],
+    ['abc', ''],
+  ])('%s → %s', (input, expected) => {
+    expect(normaliseMobileInput(input)).toBe(expected);
   });
 });

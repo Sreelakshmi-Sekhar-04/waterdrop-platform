@@ -45,6 +45,9 @@ describe('order state machine', () => {
   it('sends a failed attempt to RESCHEDULE_PENDING, which can be assigned again', () => {
     expect(checkOrderTransition('OUT_FOR_DELIVERY', 'RESCHEDULE_PENDING', 'staff').ok).toBe(true);
     expect(checkOrderTransition('RESCHEDULE_PENDING', 'ASSIGNED', 'admin').ok).toBe(true);
+    // The office picks a new day (Phase 5), then assigns it again.
+    expect(checkOrderTransition('RESCHEDULE_PENDING', 'ACCEPTED', 'admin').ok).toBe(true);
+    expect(checkOrderTransition('RESCHEDULE_PENDING', 'ACCEPTED', 'staff').ok).toBe(false);
   });
 
   it('lets customers cancel only before dispatch', () => {

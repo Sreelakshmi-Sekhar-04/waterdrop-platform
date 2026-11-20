@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { colors, fontSizes } from '@wtrdrop/design-tokens';
 import { fontFor, type Weight } from '../lib/fonts';
 
-type Variant = 'display' | 'heading' | 'title' | 'body' | 'label' | 'caption';
+type Variant = 'display' | 'heading' | 'title' | 'bodyLarge' | 'body' | 'label' | 'caption';
 
 const VARIANTS: Record<Variant, { size: number; weight: Weight }> = {
   display: { size: fontSizes.display, weight: 'black' },
   heading: { size: fontSizes.heading, weight: 'black' },
   title: { size: fontSizes.title, weight: 'heavy' },
+  bodyLarge: { size: fontSizes.bodyLarge, weight: 'regular' },
   body: { size: fontSizes.body, weight: 'regular' },
   label: { size: fontSizes.label, weight: 'bold' },
   caption: { size: fontSizes.caption, weight: 'regular' },

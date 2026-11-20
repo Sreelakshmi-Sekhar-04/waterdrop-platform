@@ -130,26 +130,18 @@
         "audit_logs_supplier_id_suppliers_id_fk": {
           "name": "audit_logs_supplier_id_suppliers_id_fk",
           "tableFrom": "audit_logs",
-          "columnsFrom": [
-            "supplier_id"
-          ],
+          "columnsFrom": ["supplier_id"],
           "tableTo": "suppliers",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "audit_logs_actor_user_id_users_id_fk": {
           "name": "audit_logs_actor_user_id_users_id_fk",
           "tableFrom": "audit_logs",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
+          "columnsFrom": ["actor_user_id"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -278,13 +270,9 @@
         "idempotency_keys_user_id_users_id_fk": {
           "name": "idempotency_keys_user_id_users_id_fk",
           "tableFrom": "idempotency_keys",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -485,26 +473,18 @@
         "sessions_user_id_users_id_fk": {
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "sessions_supplier_id_suppliers_id_fk": {
           "name": "sessions_supplier_id_suppliers_id_fk",
           "tableFrom": "sessions",
-          "columnsFrom": [
-            "supplier_id"
-          ],
+          "columnsFrom": ["supplier_id"],
           "tableTo": "suppliers",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -513,9 +493,7 @@
       "uniqueConstraints": {
         "sessions_refresh_token_hash_unique": {
           "name": "sessions_refresh_token_hash_unique",
-          "columns": [
-            "refresh_token_hash"
-          ],
+          "columns": ["refresh_token_hash"],
           "nullsNotDistinct": false
         }
       },
@@ -564,26 +542,18 @@
         "settings_supplier_id_suppliers_id_fk": {
           "name": "settings_supplier_id_suppliers_id_fk",
           "tableFrom": "settings",
-          "columnsFrom": [
-            "supplier_id"
-          ],
+          "columnsFrom": ["supplier_id"],
           "tableTo": "suppliers",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "settings_updated_by_users_id_fk": {
           "name": "settings_updated_by_users_id_fk",
           "tableFrom": "settings",
-          "columnsFrom": [
-            "updated_by"
-          ],
+          "columnsFrom": ["updated_by"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -591,10 +561,7 @@
       "compositePrimaryKeys": {
         "settings_supplier_id_key_pk": {
           "name": "settings_supplier_id_key_pk",
-          "columns": [
-            "supplier_id",
-            "key"
-          ]
+          "columns": ["supplier_id", "key"]
         }
       },
       "uniqueConstraints": {},
@@ -666,9 +633,7 @@
       "uniqueConstraints": {
         "suppliers_slug_unique": {
           "name": "suppliers_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "nullsNotDistinct": false
         }
       },
@@ -762,26 +727,18 @@
         "user_roles_user_id_users_id_fk": {
           "name": "user_roles_user_id_users_id_fk",
           "tableFrom": "user_roles",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "user_roles_supplier_id_suppliers_id_fk": {
           "name": "user_roles_supplier_id_suppliers_id_fk",
           "tableFrom": "user_roles",
-          "columnsFrom": [
-            "supplier_id"
-          ],
+          "columnsFrom": ["supplier_id"],
           "tableTo": "suppliers",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -852,9 +809,7 @@
       "uniqueConstraints": {
         "users_phone_unique": {
           "name": "users_phone_unique",
-          "columns": [
-            "phone"
-          ],
+          "columns": ["phone"],
           "nullsNotDistinct": false
         }
       },
@@ -867,36 +822,22 @@
     "public.idempotency_state": {
       "name": "idempotency_state",
       "schema": "public",
-      "values": [
-        "in_progress",
-        "completed"
-      ]
+      "values": ["in_progress", "completed"]
     },
     "public.language": {
       "name": "language",
       "schema": "public",
-      "values": [
-        "en",
-        "ml"
-      ]
+      "values": ["en", "ml"]
     },
     "public.record_status": {
       "name": "record_status",
       "schema": "public",
-      "values": [
-        "active",
-        "disabled"
-      ]
+      "values": ["active", "disabled"]
     },
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": [
-        "customer",
-        "staff",
-        "admin",
-        "owner"
-      ]
+      "values": ["customer", "staff", "admin", "owner"]
     }
   },
   "schemas": {},

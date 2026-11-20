@@ -4,8 +4,15 @@ import { errors } from '../lib/errors';
 import type { TokenService } from '../lib/tokens';
 import type { TenantContext } from '../lib/context';
 
-/** Reads a Bearer token if present. Invalid tokens are rejected, not ignored. */
-export function authenticate(tokens: TokenService): RequestHandler {
+/**
+ * Reads a Bearer token if present. Invalid tokens are rejected, not ignored.
+ * The token's session must still be open, so signing out, a PIN reset or a
+ * disabled account takes effect at once rather than when the token expires.
+ */
+export function authenticate(
+  tokens: TokenService,
+  sessionIsOpen: (sessionId: string) => Promise<boolean>,
+): RequestHandler {
   return async (req, _res, next) => {
     const header = req.header('authorization');
     if (!header) return next();
@@ -13,6 +20,7 @@ export function authenticate(tokens: TokenService): RequestHandler {
     if (!match?.[1]) throw errors.unauthenticated();
     const claims = await tokens.verifyAccessToken(match[1]);
     if (!claims) throw errors.unauthenticated();
+    if (!(await sessionIsOpen(claims.sessionId))) throw errors.unauthenticated();
     req.ctx.auth = claims;
     next();
   };

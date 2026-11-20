@@ -15,3 +15,5 @@ test-results/
 *.tsbuildinfo
 apps/mobile/dist-check/
 apps/mobile/expo-env.d.ts
+.dev-outbox/
+.e2e/
