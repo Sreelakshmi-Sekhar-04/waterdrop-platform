@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: wtrdrop_local
       POSTGRES_DB: wtrdrop
     ports:
-      - '5432:5432'
+      - '5434:5432'
     volumes:
       - wtrdrop-db:/var/lib/postgresql/data
 volumes:
