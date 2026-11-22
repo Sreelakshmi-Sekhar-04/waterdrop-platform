@@ -17,7 +17,7 @@ import { indianMobileSchema } from '@wtrdrop/shared';
 import { createDb } from './db/client';
 import { runMigrations } from './db/migrate';
 import { seed } from './db/seed';
-import { userRoles, users } from './db/schema';
+import { deliveryWindows, userRoles, users } from './db/schema';
 
 export const E2E_OWNER_PHONE = '9847000001';
 export const E2E_STAFF_PHONE = '9847000002';
@@ -45,6 +45,9 @@ async function main() {
 
   const { db, close } = createDb(databaseUrl);
   const { supplierId } = await seed(db, E2E_OWNER_PHONE);
+  // The DEMO delivery times are Monday to Saturday; open them every day so the browser tests do not
+  // fail when they happen to run on a Sunday.
+  await db.update(deliveryWindows).set({ daysOfWeek: [0, 1, 2, 3, 4, 5, 6] });
   const [staff] = await db
     .insert(users)
     .values({ phone: indianMobileSchema.parse(E2E_STAFF_PHONE), name: 'Ravi (test staff)' })
